@@ -1,5 +1,3 @@
-// src/services/api.ts
-
 import type {
   Park, HourlyAverage, CalendarData,
   HeatmapDataPoint, LiveRide, DailyEvolutionPoint, ApiResponse

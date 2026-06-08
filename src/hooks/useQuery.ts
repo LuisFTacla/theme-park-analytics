@@ -1,5 +1,3 @@
-// src/hooks/useQuery.ts
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface QueryState<T> {

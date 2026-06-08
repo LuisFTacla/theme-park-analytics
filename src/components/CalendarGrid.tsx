@@ -1,9 +1,7 @@
-// src/components/CalendarGrid.tsx
-
 import { useQuery } from '@/hooks/useQuery';
 import { api } from '@/services/api';
 import { Skeleton, ErrorMessage } from '@/components/ui';
-import { waitTimeColor, MONTH_NAMES_PT, DAY_LABELS_PT, DAY_NAMES_EN, weekOfMonth } from '@/utils';
+import { waitTimeColor, MONTH_NAMES_PT, DAY_LABELS_PT } from '@/utils';
 import { useState, useMemo } from 'react';
 import type { DailyAverage } from '@/types';
 
@@ -14,30 +12,35 @@ interface Props {
 function MonthCard({ days, month, year }: { days: DailyAverage[]; month: number; year: number }) {
   const CELL = 36; // px
   const GAP  = 3;
-  const rows  = 6;
-  const cols  = 7;
-  const svgW  = cols * (CELL + GAP) - GAP;
-  const svgH  = 24 + rows * (CELL + GAP);
+  const rows = 6;
+  const cols = 7;
+  const svgW = cols * (CELL + GAP) - GAP;
+  const svgH = 24 + rows * (CELL + GAP);
 
-  const byDay: Record<string, DailyAverage> = {};
-  for (const d of days) {
-    byDay[d.day_of_week] = d; // placeholder — overridden below
-  }
-
-  // Build grid: [week][dayIndex] -> DailyAverage | null
+  // Construímos a matriz vazia (6 linhas x 7 colunas)
   const grid: (DailyAverage | null)[][] = Array.from({ length: rows }, () =>
     Array(cols).fill(null)
   );
 
+  // Descobre qual dia da semana caiu o dia 1º DESTE MÊS (0 = Domingo, 1 = Segunda...)
+  const firstDayIndex = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+  
+  // Ajusta o índice para o seu calendário que começa na SEGUNDA-FEIRA:
+  // Segunda vira 0, Terça vira 1... Domingo vira 6.
+  const shift = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+
   for (const d of days) {
-    const week = weekOfMonth(d.day, month, year);
-    const dayIdx = DAY_NAMES_EN.indexOf(d.day_of_week);
-    if (week < rows && dayIdx >= 0) {
-      grid[week][dayIdx] = d;
+    // Calculamos a posição exata baseada estritamente no número do dia (d.day)
+    const totalIndex = d.day - 1 + shift;
+    const weekIndex = Math.floor(totalIndex / 7);
+    const dayIndex  = totalIndex % 7; // 0 = Seg, 1 = Ter, ..., 6 = Dom
+
+    if (weekIndex >= 0 && weekIndex < rows && dayIndex >= 0 && dayIndex < cols) {
+      grid[weekIndex][dayIndex] = d;
     }
   }
 
-  return (
+return (
     <div className="bg-brand-card border border-brand-border rounded-2xl p-4">
       <h3 className="font-display text-xs tracking-widest text-brand-muted uppercase mb-3">
         {MONTH_NAMES_PT[month]}
@@ -58,7 +61,7 @@ function MonthCard({ days, month, year }: { days: DailyAverage[]; month: number;
           </text>
         ))}
 
-        {/* Células */}
+        {/* Células do Calendário */}
         {grid.map((week, wi) =>
           week.map((day, di) => {
             const x = di * (CELL + GAP);

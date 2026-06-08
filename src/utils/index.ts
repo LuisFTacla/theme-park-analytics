@@ -1,5 +1,3 @@
-// src/utils/index.ts
-
 /** Mapeia wait_time para uma cor da escala RdYlGn invertida */
 export function waitTimeColor(minutes: number): string {
   if (minutes <= 0)  return 'transparent';

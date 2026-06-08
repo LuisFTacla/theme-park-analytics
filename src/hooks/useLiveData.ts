@@ -1,5 +1,3 @@
-// src/hooks/useLiveData.ts
-
 import { useState, useEffect, useRef } from 'react';
 import { api } from '@/services/api';
 import type { LiveRide } from '@/types';

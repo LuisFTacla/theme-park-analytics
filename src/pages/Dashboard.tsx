@@ -1,5 +1,3 @@
-// src/pages/Dashboard.tsx
-
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import { ArrowLeft, Radio, BarChart2, CalendarDays } from 'lucide-react';

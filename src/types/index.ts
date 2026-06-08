@@ -1,5 +1,3 @@
-// src/types/index.ts
-
 export interface Park {
   park_id: number;
   park_name: string;

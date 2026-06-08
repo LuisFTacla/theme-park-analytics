@@ -1,5 +1,3 @@
-// src/components/EvolutionChart.tsx
-
 import { useQuery } from '@/hooks/useQuery';
 import { api } from '@/services/api';
 import { Skeleton, ErrorMessage, EmptyState } from '@/components/ui';

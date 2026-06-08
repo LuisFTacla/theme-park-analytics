@@ -1,5 +1,3 @@
-// src/components/LiveStatus.tsx
-
 import { useLiveData } from '@/hooks/useLiveData';
 import { Card, Badge, Skeleton, ErrorMessage } from '@/components/ui';
 import { RefreshCw } from 'lucide-react';

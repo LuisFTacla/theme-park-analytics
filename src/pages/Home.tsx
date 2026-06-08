@@ -1,5 +1,3 @@
-// src/pages/Home.tsx
-
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@/hooks/useQuery';
 import { api } from '@/services/api';
