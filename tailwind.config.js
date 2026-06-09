@@ -13,7 +13,7 @@ export default {
           dark:   '#0a0a0f',
           card:   '#111118',
           border: '#1e1e2e',
-          muted:  '#4a4a6a',
+          muted:  '#94a3b8',
         },
       },
       animation: {

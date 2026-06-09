@@ -2,12 +2,13 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import { ArrowLeft, Radio, BarChart2, CalendarDays } from 'lucide-react';
 import { clsx } from 'clsx';
-import { LiveStatus } from '@/components/LiveStatus';
 import { EvolutionChart } from '@/components/EvolutionChart';
 import { HeatmapGrid } from '@/components/HeatmapGrid';
 import { HourlyChart } from '@/components/HourlyChart';
 import { CalendarGrid } from '@/components/CalendarGrid';
+import { LiveRidesSection } from '@/components/LiveRidesSection';
 import type { TabId, HeatmapInterval } from '@/types';
+// import { LiveStatus } from '@/components/LiveStatus';
 
 // Fuso horário por park_id — pode vir do backend também
 const TZ_MAP: Record<number, string> = {
@@ -129,7 +130,16 @@ export function Dashboard() {
             </div>
 
             {/* Status ao vivo (apenas hoje) */}
-            <LiveStatus parkId={parkId} date={date} today={today} />
+            {/* <LiveStatus parkId={parkId} date={date} today={today} /> */}
+
+            {/* Status ao vivo e Filas (Apenas se a data for hoje) */}
+            {date === today ? (
+              <LiveRidesSection parkId={parkId} />
+            ) : (
+              <div className="text-xs font-mono text-brand-muted italic p-4 bg-brand-card rounded-xl border border-brand-border">
+                Visualizando dados históricos para o dia {date.split('-').reverse().join('/')}.
+              </div>
+            )}
 
             {/* Gráfico de evolução do dia */}
             <section className="animate-fade-up" style={{ animationDelay: '0.2s', opacity: 0 }}>

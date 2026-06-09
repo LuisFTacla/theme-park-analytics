@@ -1,11 +1,17 @@
-import { useQuery } from '@/hooks/useQuery';
-import { api } from '@/services/api';
-import { Skeleton, ErrorMessage, EmptyState } from '@/components/ui';
+import { useQuery } from "@/hooks/useQuery";
+import { api } from "@/services/api";
+import { Skeleton, ErrorMessage, EmptyState } from "@/components/ui";
 import {
-  ResponsiveContainer, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, Cell,
-} from 'recharts';
-import { useMemo, useState } from 'react';
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Cell,
+} from "recharts";
+import { useMemo, useState } from "react";
 
 interface Props {
   parkId: number;
@@ -14,25 +20,25 @@ interface Props {
 export function HourlyChart({ parkId }: Props) {
   const { data, loading, error } = useQuery(
     () => api.getHourlyAverages(parkId),
-    [parkId]
+    [parkId],
   );
 
   const rides = useMemo(
-    () => data ? [...new Set(data.map(d => d.name))].sort() : [],
-    [data]
+    () => (data ? [...new Set(data.map((d) => d.name))].sort() : []),
+    [data],
   );
 
-  const [selected, setSelected] = useState<string>('');
+  const [selected, setSelected] = useState<string>("");
 
-  const currentRide = selected || rides[0] || '';
+  const currentRide = selected || rides[0] || "";
 
   const chartData = useMemo(() => {
     if (!data) return [];
     return data
-      .filter(d => d.name === currentRide)
+      .filter((d) => d.name === currentRide)
       .sort((a, b) => a.hora_cheia - b.hora_cheia)
-      .map(d => ({
-        hora: `${String(d.hora_cheia).padStart(2, '0')}h`,
+      .map((d) => ({
+        hora: `${String(d.hora_cheia).padStart(2, "0")}h`,
         wait: Math.round(d.wait_time),
       }));
   }, [data, currentRide]);
@@ -41,26 +47,29 @@ export function HourlyChart({ parkId }: Props) {
   const top3 = useMemo(() => {
     if (!chartData.length) return new Set<string>();
     const sorted = [...chartData].sort((a, b) => b.wait - a.wait).slice(0, 3);
-    return new Set(sorted.map(d => d.hora));
+    return new Set(sorted.map((d) => d.hora));
   }, [chartData]);
 
   if (loading) return <Skeleton className="h-72 w-full" />;
-  if (error)   return <ErrorMessage message={error} />;
-  if (!rides.length) return <EmptyState message="Sem dados históricos de médias horárias." />;
+  if (error) return <ErrorMessage message={error} />;
+  if (!rides.length)
+    return <EmptyState message="Sem dados históricos de médias horárias." />;
 
   return (
     <div className="space-y-5">
       {/* Seletor de atração */}
       <div className="flex flex-wrap gap-2">
-        {rides.map(r => (
+        {rides.map((r) => (
           <button
             key={r}
             onClick={() => setSelected(r)}
             className={`
               px-3 py-1.5 rounded-lg text-sm font-body transition-all border
-              ${(currentRide === r)
-                ? 'bg-brand-red border-brand-red text-white'
-                : 'bg-brand-card border-brand-border text-brand-muted hover:text-white hover:border-brand-muted'}
+              ${
+                currentRide === r
+                  ? "bg-brand-red border-brand-red text-white"
+                  : "bg-brand-card border-brand-border text-brand-muted hover:text-white hover:border-brand-muted"
+              }
             `}
           >
             {r}
@@ -81,36 +90,57 @@ export function HourlyChart({ parkId }: Props) {
       </div>
 
       <ResponsiveContainer width="100%" height={260}>
-        <BarChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e1e2e" vertical={false} />
+        <BarChart
+          data={chartData}
+          margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="#1e1e2e"
+            vertical={false}
+          />
           <XAxis
             dataKey="hora"
-            tick={{ fill: '#4a4a6a', fontSize: 11, fontFamily: 'Space Mono' }}
+            tick={{ fill: "#4a4a6a", fontSize: 11, fontFamily: "Space Mono" }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
-            tick={{ fill: '#4a4a6a', fontSize: 11, fontFamily: 'Space Mono' }}
+            tick={{ fill: "#4a4a6a", fontSize: 11, fontFamily: "Space Mono" }}
             axisLine={false}
             tickLine={false}
             tickFormatter={(v) => `${v}m`}
           />
           <Tooltip
+            cursor={{ fill: "rgba(255,255,255,0.05)", radius: 6 }}
             contentStyle={{
-              background: '#111118',
-              border: '1px solid #1e1e2e',
+              background: "#0d0d14",
+              border: "1px solid rgba(255,255,255,0.12)",
               borderRadius: 12,
-              fontFamily: 'DM Sans',
-              color: '#fff',
+              fontFamily: "DM Sans",
+              color: "#fff",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+              padding: "10px 14px",
             }}
-            formatter={(v: number) => [`${v} min`, 'Espera média histórica']}
-            labelStyle={{ color: '#4a4a6a', fontSize: 12 }}
+            labelStyle={{
+              color: "#8888aa",
+              fontSize: 11,
+              fontFamily: "Space Mono",
+              marginBottom: 4,
+            }}
+            itemStyle={{
+              color: "#ffffff",
+              fontSize: 14,
+              fontWeight: 600,
+              padding: 0,
+            }}
+            formatter={(v: number) => [`${v} min`, "Espera média histórica"]}
           />
           <Bar dataKey="wait" radius={[6, 6, 0, 0]}>
             {chartData.map((entry) => (
               <Cell
                 key={entry.hora}
-                fill={top3.has(entry.hora) ? '#ef233c' : '#0068c9'}
+                fill={top3.has(entry.hora) ? "#ef233c" : "#0068c9"}
                 opacity={top3.has(entry.hora) ? 1 : 0.75}
               />
             ))}
