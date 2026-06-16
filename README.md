@@ -34,13 +34,11 @@ Aplicação web para análise de filas e lotação em parques temáticos ao redo
 
 ## Screenshots
 
-> 💡 *Adicione capturas de tela da aplicação aqui. Sugestão: Home, Dashboard → Aba "Hoje", Heatmap e Calendário.*
 
 | Home | Hoje no Parque |
 |------|---------------|
-| (<img width="770" height="751" alt="image" src="https://github.com/user-attachments/assets/ca05c04a-13ba-4ff2-9860-25b0795e0b98" />
-) | (<img width="1141" height="791" alt="image" src="https://github.com/user-attachments/assets/6a924a2a-eabc-499a-846c-ad2bcdb2a7f8" />
-) |
+| <img width="770" height="751" alt="image" src="https://github.com/user-attachments/assets/ca05c04a-13ba-4ff2-9860-25b0795e0b98" />
+| <img width="1141" height="791" alt="image" src="https://github.com/user-attachments/assets/6a924a2a-eabc-499a-846c-ad2bcdb2a7f8" /> |
 
 | Médias Históricas | Calendário de Lotação |
 |-------------------|-----------------------|
