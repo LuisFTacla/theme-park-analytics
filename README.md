@@ -21,7 +21,6 @@ Aplicação web para análise de filas e lotação em parques temáticos ao redo
 
 ## 📋 Índice
 
-- [Screenshots](#screenshots)
 - [Funcionalidades](#funcionalidades)
 - [Stack Técnica](#stack-técnica)
 - [Arquitetura](#arquitetura)
@@ -29,22 +28,6 @@ Aplicação web para análise de filas e lotação em parques temáticos ao redo
 - [Estrutura do Projeto](#estrutura-do-projeto)
 - [Roadmap](#roadmap)
 - [Histórico de Versões](#histórico-de-versões)
-
----
-
-## Screenshots
-
-
-| Home | Hoje no Parque |
-|------|---------------|
-| <img width="770" height="751" alt="image" src="https://github.com/user-attachments/assets/ca05c04a-13ba-4ff2-9860-25b0795e0b98" />
-| <img width="1141" height="791" alt="image" src="https://github.com/user-attachments/assets/6a924a2a-eabc-499a-846c-ad2bcdb2a7f8" /> |
-
-| Médias Históricas | Calendário de Lotação |
-|-------------------|-----------------------|
-| (<img width="1148" height="724" alt="image" src="https://github.com/user-attachments/assets/0e186329-c230-48b6-9075-ac375e630d36" />
-) | (<img width="1136" height="648" alt="image" src="https://github.com/user-attachments/assets/363bde65-fe62-4c16-87cf-98c1da3de877" />
-) |
 
 ---
 
