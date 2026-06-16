@@ -1,5 +1,5 @@
 # 🎢 Theme Park Analytics
-
+<img width="100%" style="border-radius: 8px; margin-bottom: 20px;" alt="Luis Fernando - Banner de Capa" src="https://github.com/user-attachments/assets/6803a02d-d690-4ffb-b1ef-9bf440198d4e" />
 <div align="center">
 
 ![React](https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=black)
