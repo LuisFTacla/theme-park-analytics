@@ -38,7 +38,8 @@ Aplicação web para análise de filas e lotação em parques temáticos ao redo
 
 | Home | Hoje no Parque |
 |------|---------------|
-| ![Home](./docs/screenshot-home.png) | ![Dashboard](./docs/screenshot-dashboard.png) |
+| ![Home](<img width="770" height="751" alt="image" src="https://github.com/user-attachments/assets/ca05c04a-13ba-4ff2-9860-25b0795e0b98" />
+) | ![Dashboard](./docs/screenshot-dashboard.png) |
 
 | Médias Históricas | Calendário de Lotação |
 |-------------------|-----------------------|
