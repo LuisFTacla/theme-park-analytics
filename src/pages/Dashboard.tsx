@@ -1,12 +1,16 @@
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import { ArrowLeft, Radio, BarChart2, CalendarDays } from 'lucide-react';
+// import { LineChart as LineChartIcon } from 'lucide-react'; // ícone da aba "Validação do Modelo", oculta por ora
 import { clsx } from 'clsx';
 import { EvolutionChart } from '@/components/EvolutionChart';
 import { HeatmapGrid } from '@/components/HeatmapGrid';
 import { HourlyChart } from '@/components/HourlyChart';
 import { CalendarGrid } from '@/components/CalendarGrid';
 import { LiveRidesSection } from '@/components/LiveRidesSection';
+import { ParkMapAnimation } from '@/components/ParkMapAnimation';
+import { BacktestChart } from '@/components/BacktestChart';
+import { BETO_CARRERO_PARK_ID } from '@/utils/parkSchedule';
 import type { TabId, HeatmapInterval } from '@/types';
 // import { LiveStatus } from '@/components/LiveStatus';
 
@@ -26,15 +30,18 @@ function toLocalDateStr(tz: string): string {
 }
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
-  { id: 'live',     label: 'Hoje no Parque',        icon: <Radio size={14} /> },
-  { id: 'hourly',   label: 'Movimento por Atração',  icon: <BarChart2 size={14} /> },
-  { id: 'calendar', label: 'Calendário de Lotação',  icon: <CalendarDays size={14} /> },
+  { id: 'live',       label: 'Hoje no Parque',        icon: <Radio size={14} /> },
+  { id: 'hourly',     label: 'Movimento por Atração',  icon: <BarChart2 size={14} /> },
+  { id: 'calendar',   label: 'Calendário de Lotação',  icon: <CalendarDays size={14} /> },
+  // Oculta até o forecast-service estar deployado — { id: 'validation', label: 'Validação do Modelo', icon: <LineChartIcon size={14} /> },
 ];
 
 const INTERVALS: { label: string; value: HeatmapInterval }[] = [
   { label: '1 Hora',     value: 60 },
   { label: '30 Minutos', value: 30 },
   { label: '15 Minutos', value: 15 },
+  { label: '10 Minutos', value: 10 },
+  { label: '5 Minutos',  value: 5 },
 ];
 
 export function Dashboard() {
@@ -178,6 +185,18 @@ export function Dashboard() {
                 <HeatmapGrid parkId={parkId} date={date} interval={interval} />
               </div>
             </section>
+
+            {/* Mapa animado de filas — coordenadas cadastradas só para o Beto Carrero */}
+            {parkId === BETO_CARRERO_PARK_ID && (
+              <section className="animate-fade-up" style={{ animationDelay: '0.3s', opacity: 0 }}>
+                <h2 className="font-display text-sm tracking-widest text-brand-muted uppercase mb-4">
+                  🗺️ Mapa de Filas — {date.split('-').reverse().join('/')}
+                </h2>
+                <div className="bg-brand-card border border-brand-border rounded-2xl p-5">
+                  <ParkMapAnimation parkId={parkId} date={date} interval={interval} />
+                </div>
+              </section>
+            )}
           </div>
         )}
 
@@ -204,6 +223,19 @@ export function Dashboard() {
               📅 Calendário de Lotação Histórica
             </h2>
             <CalendarGrid parkId={parkId} />
+          </div>
+        )}
+
+        {/* ── Tab: Validação do Modelo ── */}
+        {tab === 'validation' && (
+          <div
+            className="bg-brand-card border border-brand-border rounded-2xl p-6 animate-fade-up"
+            style={{ opacity: 0 }}
+          >
+            <h2 className="font-display text-sm tracking-widest text-brand-muted uppercase mb-6">
+              🔬 Validação do Modelo — Previsto vs. Real (2026)
+            </h2>
+            <BacktestChart parkId={parkId} />
           </div>
         )}
       </div>

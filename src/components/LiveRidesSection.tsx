@@ -3,6 +3,7 @@ import { useQuery } from "@/hooks/useQuery";
 import { api } from "@/services/api";
 import { Skeleton, ErrorMessage } from "@/components/ui";
 import { waitTimeColor } from "@/utils";
+import { isParkOpenNow } from "@/utils/parkSchedule";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { LiveRide } from "@/types";
@@ -20,10 +21,21 @@ export function LiveRidesSection({ parkId }: Props) {
 
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const processedRides = useMemo(() => {
-    if (!rides || rides.length === 0) return [];
+  // O parque pode estar fechado (feriado/dia sem operação ou fora do
+  // horário de funcionamento) mesmo que a atração ainda informe fila —
+  // nesses casos, ignoramos o dado da API e tratamos tudo como fechado.
+  const parkClosed = !isParkOpenNow(parkId);
 
-    const normalized = rides.map((r) => ({
+  const effectiveRides = useMemo(() => {
+    if (!rides) return rides;
+    if (!parkClosed) return rides;
+    return rides.map((r) => ({ ...r, is_open: false, wait_time: 0 }));
+  }, [rides, parkClosed]);
+
+  const processedRides = useMemo(() => {
+    if (!effectiveRides || effectiveRides.length === 0) return [];
+
+    const normalized = effectiveRides.map((r) => ({
       ...r,
       realIsOpen: r.is_open && r.wait_time > 0,
     }));
@@ -36,13 +48,13 @@ export function LiveRidesSection({ parkId }: Props) {
     } else {
       return normalized.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
     }
-  }, [rides, isExpanded]);
+  }, [effectiveRides, isExpanded]);
 
   const metrics = useMemo(() => {
-    if (!rides) return { open: 0, closed: 0 };
-    const open = rides.filter((r) => r.is_open && r.wait_time > 0).length;
-    return { open, closed: rides.length - open };
-  }, [rides]);
+    if (!effectiveRides) return { open: 0, closed: 0 };
+    const open = effectiveRides.filter((r) => r.is_open && r.wait_time > 0).length;
+    return { open, closed: effectiveRides.length - open };
+  }, [effectiveRides]);
 
   if (loading) return <Skeleton className="h-32 w-full rounded-xl" />;
   if (error) return <ErrorMessage message={error} />;

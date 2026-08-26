@@ -352,7 +352,16 @@ export function Home() {
               <div className="space-y-8 pt-2">
                 {[
                   {
-                    version: 'v2.0', label: 'Atual',
+                    version: 'v2.1', label: 'Atual',
+                    items: [
+                      '⏳ Aviso de Servidor Acordando: indicador visual enquanto o back-end (free tier) "acorda" de uma hibernação, para o usuário não achar que a aplicação travou.',
+                      '📅 Calendário de Operação do Parque: dias fechados e horário de funcionamento (10h–19h) passam a valer em "Hoje no Parque", ignorando painéis de atração esquecidos ligados fora desses períodos.',
+                      '🗺️ Mapa de Filas Animado: visualização geoespacial (satélite) com um círculo por atração que cresce ou encolhe ao longo do dia, com play/pause, controle de velocidade (1x–8x) e navegação manual por horário.',
+                      '🔬 Granularidade Refinada: heatmap e mapa animado passam a suportar blocos de 5 e 10 minutos, além de 15/30/60.',
+                    ],
+                  },
+                  {
+                    version: 'v2.0', label: null,
                     items: [
                       '🏗️ Mudança de Stack: migração completa do Streamlit monolítico para uma arquitetura desacoplada com React + TypeScript no front-end e API REST em Node.js no back-end.',
                       '🎨 Design System próprio: tipografia, paleta de cores, componentes e tokens visuais consistentes — impossível de atingir no Streamlit.',

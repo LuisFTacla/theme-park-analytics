@@ -75,10 +75,19 @@ return (
             }
 
             const fill = waitTimeColor(day.wait_time);
+            const isForecast = day.is_forecast === true;
+
             return (
               <g key={`${wi}-${di}`}>
-                <rect x={x} y={y} width={CELL} height={CELL} rx={6} ry={6} fill={fill}>
-                  <title>{`${day.day}/${month} — ${Math.round(day.wait_time)} min`}</title>
+                <rect
+                  x={x} y={y} width={CELL} height={CELL} rx={6} ry={6}
+                  fill={fill}
+                  opacity={isForecast ? 0.55 : 1}
+                  stroke={isForecast ? '#ffffff' : 'none'}
+                  strokeWidth={isForecast ? 1.2 : 0}
+                  strokeDasharray={isForecast ? '3,2' : undefined}
+                >
+                  <title>{`${day.day}/${month} — ${Math.round(day.wait_time)} min${isForecast ? ' (previsão)' : ''}`}</title>
                 </rect>
                 <text
                   x={x + CELL / 2}
@@ -103,6 +112,20 @@ return (
                 >
                   {Math.round(day.wait_time)}m
                 </text>
+                {isForecast && (
+                  <text
+                    x={x + CELL - 5}
+                    y={y + 9}
+                    textAnchor="end"
+                    fontSize={7}
+                    fill="#000"
+                    fontFamily="Space Mono"
+                    fontWeight="700"
+                    opacity={0.55}
+                  >
+                    P
+                  </text>
+                )}
               </g>
             );
           })
@@ -174,6 +197,13 @@ export function CalendarGrid({ parkId }: Props) {
             {label}
           </span>
         ))}
+        <span className="flex items-center gap-1.5">
+          <span
+            className="w-3 h-3 rounded-sm inline-block border border-dashed border-white/70"
+            style={{ background: '#a3e635', opacity: 0.55 }}
+          />
+          🔮 Previsão (±13 min de margem esperada)
+        </span>
       </div>
 
       {/* Grid de meses */}

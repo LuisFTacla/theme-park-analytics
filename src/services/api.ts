@@ -1,18 +1,57 @@
 import type {
   Park, HourlyAverage, CalendarData,
-  HeatmapDataPoint, LiveRide, DailyEvolutionPoint, ApiResponse
+  HeatmapDataPoint, LiveRide, DailyEvolutionPoint, ApiResponse,
+  ForecastData, BacktestPoint,
 } from '@/types';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
+// ─── Detecção de "servidor acordando" (free tier hiberna após inatividade) ────
+// Se uma requisição demorar mais que WAKE_THRESHOLD_MS para responder, avisamos
+// a UI para exibir um aviso — sem isso o usuário acha que a aplicação travou.
+const WAKE_THRESHOLD_MS = 2500;
+
+type WakingListener = (waking: boolean) => void;
+const wakingListeners = new Set<WakingListener>();
+let pendingRequests = 0;
+let wakeTimer: ReturnType<typeof setTimeout> | null = null;
+let isWaking = false;
+
+function setWaking(value: boolean) {
+  if (isWaking === value) return;
+  isWaking = value;
+  wakingListeners.forEach(listener => listener(value));
+}
+
+export function subscribeWaking(listener: WakingListener): () => void {
+  wakingListeners.add(listener);
+  listener(isWaking);
+  return () => wakingListeners.delete(listener);
+}
+
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`);
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message ?? `HTTP ${res.status}`);
+  pendingRequests++;
+  if (!wakeTimer) {
+    wakeTimer = setTimeout(() => setWaking(true), WAKE_THRESHOLD_MS);
   }
-  const json: ApiResponse<T> = await res.json();
-  return json.data;
+  try {
+    const res = await fetch(`${BASE_URL}${path}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message ?? `HTTP ${res.status}`);
+    }
+    const json: ApiResponse<T> = await res.json();
+    return json.data;
+  } finally {
+    pendingRequests--;
+    if (pendingRequests === 0) {
+      if (wakeTimer) {
+        clearTimeout(wakeTimer);
+        wakeTimer = null;
+      }
+      setWaking(false);
+    }
+  }
 }
 
 export const api = {
@@ -36,4 +75,10 @@ export const api = {
 
   getLive: (parkId: number) =>
     get<LiveRide[]>(`/parks/${parkId}/live`),
+
+  getForecast: (parkId: number, days = 14) =>
+    get<ForecastData>(`/parks/${parkId}/forecast?days=${days}`),
+
+  getBacktest: (parkId: number) =>
+    get<BacktestPoint[]>(`/parks/${parkId}/backtest`),
 };

@@ -8,6 +8,12 @@ export function waitTimeColor(minutes: number): string {
   return '#ef4444';                    // vermelho
 }
 
+/** Raio (em px) do círculo de fila no mapa animado, escalado pelo tempo de espera */
+export function waitTimeRadius(minutes: number): number {
+  if (minutes <= 0) return 5;
+  return clamp(8 + minutes * 0.55, 8, 42);
+}
+
 /** Label descritivo do tempo de fila */
 export function waitTimeLabel(minutes: number): string {
   if (minutes < 20) return 'Vazio';
