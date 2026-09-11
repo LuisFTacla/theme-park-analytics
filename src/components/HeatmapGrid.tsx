@@ -2,6 +2,7 @@ import { useQuery } from '@/hooks/useQuery';
 import { api } from '@/services/api';
 import { Skeleton, ErrorMessage, EmptyState } from '@/components/ui';
 import { waitTimeColor } from '@/utils';
+import { buildTimeColumnLayout } from '@/utils/heatmapLayout';
 import type { HeatmapInterval } from '@/types';
 import { useMemo } from 'react';
 
@@ -56,7 +57,9 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
   const LABEL_H = 40;
   const GAP = 2;
 
-  const svgW = LABEL_W + times.length * (CELL_W + GAP);
+  // Na fronteira de hora cheia o espaçamento total vira o dobro do normal
+  const columns = buildTimeColumnLayout(times, CELL_W, GAP, GAP);
+  const svgW = LABEL_W + columns.width;
   const svgH = LABEL_H + rides.length * (CELL_H + GAP);
 
   return (
@@ -89,7 +92,7 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
       >
         {/* Cabeçalho de horários */}
         {times.map((t, ti) => {
-          const x = LABEL_W + ti * (CELL_W + GAP) + CELL_W / 2;
+          const x = LABEL_W + columns.x[ti] + CELL_W / 2;
           // Mostra label apenas para horas cheias
           const showLabel = t.endsWith(':00');
           return showLabel ? (
@@ -129,7 +132,7 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
                 const val  = matrix[ride]?.[t] ?? null;
                 const fill = val !== null ? waitTimeColor(val) : '#1e1e2e';
                 const opacity = val !== null ? 1 : 0.4;
-                const cx = LABEL_W + ti * (CELL_W + GAP);
+                const cx = LABEL_W + columns.x[ti];
 
                 return (
                   <g key={t}>
@@ -163,6 +166,15 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
                 );
               })}
             </g>
+          );
+        })}
+
+        {/* Divisores de hora cheia — centralizados no espaçamento dobrado */}
+        {times.map((t, ti) => {
+          if (ti === 0 || !t.endsWith(':00')) return null;
+          const x = LABEL_W + columns.x[ti] - GAP;
+          return (
+            <line key={`divider-${t}`} x1={x} y1={LABEL_H} x2={x} y2={svgH} stroke="#ffffff" strokeOpacity={0.4} strokeWidth={1} />
           );
         })}
       </svg>

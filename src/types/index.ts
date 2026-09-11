@@ -29,6 +29,30 @@ export interface HeatmapDataPoint {
   label_tempo: string;
 }
 
+// ─── Detalhe de uma atração (modal) ─────────────────────────────────────────
+
+export interface RideStats {
+  historicalAvg: number | null;
+  historicalMax: number | null;
+  dailyAvg: number | null;
+  dailyMax: number | null;
+}
+
+export interface RideHeatmapHistoryPoint {
+  data_local: string;
+  hora: number;
+  minuto_bloco: number;
+  wait_time_medio: number;
+  label_tempo: string;
+}
+
+export interface RideHistoricalProfilePoint {
+  hora: number;
+  minuto_bloco: number;
+  wait_time_medio: number;
+  label_tempo: string;
+}
+
 export interface LiveRide {
   id: number;
   name: string;
@@ -79,4 +103,4 @@ export interface ApiResponse<T> {
 // Intervalo para o heatmap
 export type HeatmapInterval = 5 | 10 | 15 | 30 | 60;
 
-export type TabId = 'live' | 'hourly' | 'calendar' | 'validation';
+export type TabId = 'live' | 'calendar' | 'validation';

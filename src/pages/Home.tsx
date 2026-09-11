@@ -5,6 +5,8 @@ import { Spinner, ErrorMessage } from '@/components/ui';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { PARK_GROUPS } from '@/config/parkGroups';
+import { ParkGroupCard } from '@/components/ParkGroupCard';
 import type { Park } from '@/types';
 
 // ── Dropdown via Portal (evita ser cortado por overflow/z-index de ancestrais) ──
@@ -123,7 +125,11 @@ export function Home() {
   const { data: parks, loading, error } = useQuery(() => api.getParks());
   const [isOpen, setIsOpen] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
+  const [showAllGroups, setShowAllGroups] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
+
+  const featuredGroups = PARK_GROUPS.filter(g => g.featured);
+  const otherGroups = PARK_GROUPS.filter(g => !g.featured);
 
   const handleSelect = (park: Park) => {
     navigate(`/park/${park.park_id}`, { state: { parkName: park.park_name } });
@@ -160,6 +166,36 @@ export function Home() {
           </p>
         </div>
 
+        {/* ── Atalhos de parques/grupos ── */}
+        <div className="mb-8 animate-fade-up" style={{ animationDelay: '0.1s', opacity: 0 }}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {featuredGroups.map(group => (
+              <ParkGroupCard
+                key={group.id}
+                group={group}
+                parks={parks ?? []}
+                primary={group.id === 'bcw'}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={() => setShowAllGroups(prev => !prev)}
+            className="flex items-center gap-1.5 mt-4 font-display text-xs tracking-widest text-brand-muted hover:text-white uppercase transition-all"
+          >
+            {showAllGroups ? 'Recolher' : 'Ver outros parques e resorts'}
+            {showAllGroups ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+
+          {showAllGroups && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+              {otherGroups.map(group => (
+                <ParkGroupCard key={group.id} group={group} parks={parks ?? []} />
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* ── Dropdown ── */}
         <div className="animate-fade-up" style={{ animationDelay: '0.15s', opacity: 0 }}>
           <button
@@ -173,7 +209,7 @@ export function Home() {
               transition-all
             "
           >
-            <span className="text-brand-muted">Selecione um parque...</span>
+            <span className="text-brand-muted">Ou busque um parque específico...</span>
             {isOpen
               ? <ChevronUp size={16} className="text-brand-muted shrink-0" />
               : <ChevronDown size={16} className="text-brand-muted shrink-0" />
@@ -224,6 +260,13 @@ export function Home() {
               evoluiu para uma <span className="text-white">aplicação web completa</span> com
               separação de responsabilidades entre front-end e back-end.
             </p>
+            <p className="text-brand-muted text-sm leading-relaxed">
+              Ao longo de 2026, o escopo deixou de ser exclusivo do BCW: a plataforma passou a
+              acompanhar <span className="text-white">outros parques e resorts ao redor do mundo</span>{' '}
+              (Disney, Universal, Six Flags, entre outros), com uma home que combina a fila de vários
+              parques do mesmo grupo em um único cartão, e um nível de detalhe por atração — histórico,
+              tendência e comparação com a média — que antes só existia para o parque piloto.
+            </p>
           </section>
 
           {/* 2. Arquitetura */}
@@ -236,7 +279,7 @@ export function Home() {
                 { label: 'Fonte de Dados', desc: 'Integração direta com a API do Queue-Times.com, que fornece dados em tempo real baseados nos aplicativos oficiais dos parques.' },
                 { label: 'Processamento (ETL)', desc: 'Funções AWS Lambda com rotinas periódicas que consomem a API, normalizam os dados para um esquema padrão e os organizam automaticamente.' },
                 { label: 'Armazenamento', desc: 'GitHub como repositório de backup em .csv e Google BigQuery como warehouse analítico para consultas rápidas sobre grandes volumes históricos.' },
-                { label: 'Back-end', desc: 'API REST dedicada em Node.js, desacoplada da camada de visualização, com endpoints otimizados por parque e tipo de análise.' },
+                { label: 'Back-end', desc: 'API REST dedicada em Node.js, desacoplada da camada de visualização, com endpoints otimizados por parque, por atração (histórico, estatísticas e comparação) e por grupo de parques.' },
                 { label: 'Front-end', desc: 'Aplicação React com TypeScript, roteamento client-side, componentes reutilizáveis e design system próprio — substituindo o Streamlit monolítico.' },
               ].map(item => (
                 <li key={item.label} className="flex gap-3 text-sm">
@@ -268,18 +311,28 @@ export function Home() {
                   {[
                     {
                       name: '⚡ Tempo Real',
-                      desc: 'Status atual, Top 4 esperas e evolução temporal do dia.',
-                      logic: 'GET API comparado ao histórico do mesmo dia para indicar tendência.',
+                      desc: 'Status atual, sparkline e tendência por atração, com destaque para as maiores filas.',
+                      logic: 'Série do dia comparada ao histórico recente para calcular a direção da tendência (alta/baixa/estável).',
                     },
                     {
-                      name: '📊 Por Atração',
-                      desc: 'Gráfico de barras segmentado por janelas horárias.',
-                      logic: 'Agrupamento histórico com destaque automático nos 3 horários de pico.',
+                      name: '🔍 Detalhe por Atração',
+                      desc: 'Clique em qualquer atração: evolução do dia vs. média histórica, quadro de fatos e heatmap dos últimos 14 dias.',
+                      logic: 'Cruza a série do dia com o perfil histórico por horário da mesma atração.',
+                    },
+                    {
+                      name: '🗺️ Mapa de Filas Animado',
+                      desc: 'Mapa de satélite com um círculo por atração que cresce/encolhe ao longo do dia (Beto Carrero World).',
+                      logic: 'Coordenadas reais das atrações combinadas ao heatmap por bloco de tempo (5 a 60 min).',
                     },
                     {
                       name: '📅 Calendário',
                       desc: 'Heatmap anual de lotação diária.',
                       logic: 'Média das atrações mecânicas com escala calibrada por quartis.',
+                    },
+                    {
+                      name: '🌎 Grupos de Parques',
+                      desc: 'Cartões na Home combinam a fila de vários parques do mesmo resort (ex: os parques da Disney).',
+                      logic: 'Agrega as séries de cada parque do grupo por bloco de tempo, respeitando o fuso horário local.',
                     },
                   ].map(row => (
                     <tr key={row.name} className="hover:bg-white/[0.02] transition-colors">
@@ -304,6 +357,7 @@ export function Home() {
                 'Limpeza de outliers: filtros para ignorar erros de digitação de operadores (ex: 990 min).',
                 'Filtro de operação: remoção de períodos com parque fechado para preservar médias reais.',
                 'Seleção de IDs: apenas atrações mecânicas, excluindo shows e zoológico dos cálculos de lotação.',
+                'Calendário de operação: dias fechados e horário de funcionamento (10h–19h) aplicados em "Hoje no Parque", ignorando filas de painéis de atração esquecidos ligados fora do expediente.',
               ].map(item => (
                 <li key={item} className="flex gap-3 text-sm">
                   <span className="text-brand-red font-mono shrink-0 mt-0.5">→</span>
@@ -320,8 +374,8 @@ export function Home() {
             </h2>
             <ul className="space-y-2">
               {[
-                'Expansão da limpeza de dados para parques internacionais (Disney, Universal, etc.).',
-                'Implementação de modelos de Machine Learning para predição de filas futuras.',
+                'Publicar o microsserviço de previsão (modelo já treinado e validado via backtest) para reativar a previsão de filas futuras.',
+                'Expandir o mapa de filas animado para outros parques, à medida que as coordenadas de cada atração forem mapeadas.',
                 'Autenticação de usuários com histórico de parques favoritos.',
                 'PWA com notificações push para alertas de pico em tempo real.',
               ].map(item => (
@@ -352,7 +406,17 @@ export function Home() {
               <div className="space-y-8 pt-2">
                 {[
                   {
-                    version: 'v2.1', label: 'Atual',
+                    version: 'v3.0', label: 'Atual',
+                    items: [
+                      '🌎 Múltiplos Parques e Resorts: cartões na Home combinam a fila de vários parques do mesmo grupo (Disney, Universal, Six Flags e outros), com tendência e sparkline por grupo.',
+                      '🔍 Detalhe por Atração: clique em qualquer atração abre um painel com evolução do dia vs. média histórica, quadro de fatos (médias e máximas) e heatmap dos últimos 14 dias.',
+                      '📈 Indicador de Tendência: seta de alta/baixa/estável (com variação em min/h) por atração e por grupo de parques.',
+                      '🕒 Recorte por Horário de Funcionamento: séries diárias cortam automaticamente a cauda da madrugada (ex: Extra Magic Hours), refletindo o horário real de operação de cada parque.',
+                      '🧹 Simplificação: removida a aba "Movimento por Atração", substituída pelo detalhe por atração — mais completo e acessível direto do card.',
+                    ],
+                  },
+                  {
+                    version: 'v2.1', label: null,
                     items: [
                       '⏳ Aviso de Servidor Acordando: indicador visual enquanto o back-end (free tier) "acorda" de uma hibernação, para o usuário não achar que a aplicação travou.',
                       '📅 Calendário de Operação do Parque: dias fechados e horário de funcionamento (10h–19h) passam a valer em "Hoje no Parque", ignorando painéis de atração esquecidos ligados fora desses períodos.',

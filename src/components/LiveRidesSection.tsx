@@ -2,24 +2,70 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@/hooks/useQuery";
 import { api } from "@/services/api";
 import { Skeleton, ErrorMessage } from "@/components/ui";
-import { waitTimeColor } from "@/utils";
+import { waitTimeColor, minutesFromTimeLabel } from "@/utils";
 import { isParkOpenNow } from "@/utils/parkSchedule";
+import { computeTrend, type TrendPoint } from "@/utils/trend";
+import { trimToOperatingHours, toOperatingMinutes } from "@/utils/operatingHours";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import type { LiveRide } from "@/types";
+import { Sparkline } from "@/components/Sparkline";
+import { TrendIndicator } from "@/components/TrendIndicator";
+import { RideDetailModal } from "@/components/RideDetailModal";
+import type { LiveRide, HeatmapInterval } from "@/types";
 
 interface Props {
   parkId: number;
+  date: string; // YYYY-MM-DD, dia atual do parque (fuso local)
 }
 
-export function LiveRidesSection({ parkId }: Props) {
+// Granularidade usada só para o sparkline/tendência de cada card — não é
+// configurável pelo usuário, diferente do heatmap grande da aba "Hoje no Parque".
+const TREND_INTERVAL: HeatmapInterval = 15;
+
+export function LiveRidesSection({ parkId, date }: Props) {
   const {
     data: rides,
     loading,
     error,
   } = useQuery<LiveRide[]>(() => api.getLive(parkId), [parkId]);
 
+  const { data: heatmap } = useQuery(
+    () => api.getHeatmap(parkId, date, TREND_INTERVAL),
+    [parkId, date]
+  );
+
+  // Série do dia por atração, usada tanto pro sparkline quanto pro cálculo de tendência.
+  const seriesByRide = useMemo(() => {
+    const raw = new Map<string, TrendPoint[]>();
+    if (!heatmap) return raw;
+    for (const point of heatmap) {
+      if (point.wait_time_medio <= 0) continue; // fechado / sem dado no bloco
+      const list = raw.get(point.name) ?? [];
+      list.push({ minutesFromMidnight: toOperatingMinutes(minutesFromTimeLabel(point.label_tempo)), waitTime: point.wait_time_medio });
+      raw.set(point.name, list);
+    }
+
+    // Corta a cauda da madrugada (ex: Extra Magic Hours da noite anterior) —
+    // ver utils/operatingHours.ts
+    const map = new Map<string, TrendPoint[]>();
+    for (const [name, series] of raw) {
+      map.set(name, trimToOperatingHours(series, p => p.waitTime));
+    }
+    return map;
+  }, [heatmap]);
+
+  // Teto compartilhado entre os sparklines de todas as atrações, pra que a
+  // altura do card reflita a fila de verdade — não só a forma da série.
+  const sharedMax = useMemo(() => {
+    let max = 0;
+    for (const series of seriesByRide.values()) {
+      for (const point of series) max = Math.max(max, point.waitTime);
+    }
+    return max;
+  }, [seriesByRide]);
+
   const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedRide, setSelectedRide] = useState<string | null>(null);
 
   // O parque pode estar fechado (feriado/dia sem operação ou fora do
   // horário de funcionamento) mesmo que a atração ainda informe fila —
@@ -112,7 +158,7 @@ export function LiveRidesSection({ parkId }: Props) {
             transition={{ duration: 0.2 }}
           >
             {isExpanded
-              ? "⚡ Todas as Atrações (Ordem Alfabética)"
+              ? "⚡ Todas as Atrações"
               : "🔥 Maiores Filas no Momento"}
           </motion.h2>
         </AnimatePresence>
@@ -130,14 +176,19 @@ export function LiveRidesSection({ parkId }: Props) {
             {processedRides.map((ride, index) => {
               const badgeColor = waitTimeColor(ride.wait_time);
               const isClosed = !ride.realIsOpen;
+              const series = seriesByRide.get(ride.name) ?? [];
+              const trend = !isClosed && series.length >= 2 ? computeTrend(series) : null;
 
               return (
                 // Cada card entra de forma escalonada
                 <motion.div
                   key={ride.id}
+                  onClick={() => setSelectedRide(ride.name)}
+                  role="button"
+                  tabIndex={0}
                   className={`
-                    bg-brand-card border rounded-xl p-4 flex flex-col justify-between min-h-[96px]
-                    transition-all duration-300 ease-out
+                    bg-brand-card border rounded-xl p-4 flex flex-col justify-between min-h-[132px]
+                    cursor-pointer transition-all duration-300 ease-out
                     ${
                       isClosed
                         ? "border-brand-border opacity-40"
@@ -156,6 +207,10 @@ export function LiveRidesSection({ parkId }: Props) {
                     {ride.name}
                   </span>
 
+                  <div className="h-8 -mx-1">
+                    {!isClosed && series.length >= 2 && <Sparkline points={series} maxValue={sharedMax} />}
+                  </div>
+
                   <div className="flex items-baseline justify-between mt-2">
                     {!isClosed ? (
                       <>
@@ -165,10 +220,13 @@ export function LiveRidesSection({ parkId }: Props) {
                             min
                           </span>
                         </span>
-                        <span
-                          className="w-2.5 h-2.5 rounded-full shadow-sm"
-                          style={{ backgroundColor: badgeColor }}
-                        />
+                        <div className="flex items-center gap-2">
+                          {trend && <TrendIndicator trend={trend} />}
+                          <span
+                            className="w-2.5 h-2.5 rounded-full shadow-sm"
+                            style={{ backgroundColor: badgeColor }}
+                          />
+                        </div>
                       </>
                     ) : (
                       <span className="font-display text-xs tracking-wider text-brand-red font-bold uppercase bg-brand-red/10 px-2 py-0.5 rounded-md border border-brand-red/20">
@@ -182,6 +240,15 @@ export function LiveRidesSection({ parkId }: Props) {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {selectedRide && (
+        <RideDetailModal
+          parkId={parkId}
+          date={date}
+          rideName={selectedRide}
+          onClose={() => setSelectedRide(null)}
+        />
+      )}
     </div>
   );
 }

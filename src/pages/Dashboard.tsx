@@ -1,37 +1,21 @@
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useMemo } from 'react';
-import { ArrowLeft, Radio, BarChart2, CalendarDays } from 'lucide-react';
+import { ArrowLeft, Radio, CalendarDays } from 'lucide-react';
 // import { LineChart as LineChartIcon } from 'lucide-react'; // ícone da aba "Validação do Modelo", oculta por ora
 import { clsx } from 'clsx';
 import { EvolutionChart } from '@/components/EvolutionChart';
 import { HeatmapGrid } from '@/components/HeatmapGrid';
-import { HourlyChart } from '@/components/HourlyChart';
 import { CalendarGrid } from '@/components/CalendarGrid';
 import { LiveRidesSection } from '@/components/LiveRidesSection';
 import { ParkMapAnimation } from '@/components/ParkMapAnimation';
 import { BacktestChart } from '@/components/BacktestChart';
 import { BETO_CARRERO_PARK_ID } from '@/utils/parkSchedule';
+import { TZ_MAP, localDateStr } from '@/config/timezone';
 import type { TabId, HeatmapInterval } from '@/types';
 // import { LiveStatus } from '@/components/LiveStatus';
 
-// Fuso horário por park_id — pode vir do backend também
-const TZ_MAP: Record<number, string> = {
-  319: 'America/Sao_Paulo', 2: 'Europe/London', 4: 'Europe/Paris',
-  5: 'America/New_York', 6: 'America/New_York', 7: 'America/New_York',
-  8: 'America/New_York', 9: 'Europe/Paris', 15: 'America/New_York',
-  16: 'America/Los_Angeles', 17: 'America/Los_Angeles', 21: 'America/New_York',
-  24: 'America/New_York', 28: 'Europe/Paris', 32: 'America/Los_Angeles',
-  61: 'America/Los_Angeles', 64: 'America/New_York', 65: 'America/New_York',
-  66: 'America/Los_Angeles', 334: 'America/New_York',
-};
-
-function toLocalDateStr(tz: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date());
-}
-
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'live',       label: 'Hoje no Parque',        icon: <Radio size={14} /> },
-  { id: 'hourly',     label: 'Movimento por Atração',  icon: <BarChart2 size={14} /> },
   { id: 'calendar',   label: 'Calendário de Lotação',  icon: <CalendarDays size={14} /> },
   // Oculta até o forecast-service estar deployado — { id: 'validation', label: 'Validação do Modelo', icon: <LineChartIcon size={14} /> },
 ];
@@ -52,7 +36,7 @@ export function Dashboard() {
   const parkId = Number(parkIdStr);
   const parkName: string = location.state?.parkName ?? `Parque #${parkId}`;
   const tz = TZ_MAP[parkId] ?? 'UTC';
-  const today = useMemo(() => toLocalDateStr(tz), [tz]);
+  const today = useMemo(() => localDateStr(tz), [tz]);
 
   const [tab, setTab] = useState<TabId>('live');
   const [date, setDate] = useState<string>(today);
@@ -141,7 +125,7 @@ export function Dashboard() {
 
             {/* Status ao vivo e Filas (Apenas se a data for hoje) */}
             {date === today ? (
-              <LiveRidesSection parkId={parkId} />
+              <LiveRidesSection parkId={parkId} date={today} />
             ) : (
               <div className="text-xs font-mono text-brand-muted italic p-4 bg-brand-card rounded-xl border border-brand-border">
                 Visualizando dados históricos para o dia {date.split('-').reverse().join('/')}.
@@ -197,19 +181,6 @@ export function Dashboard() {
                 </div>
               </section>
             )}
-          </div>
-        )}
-
-        {/* ── Tab: Movimento por Atração ── */}
-        {tab === 'hourly' && (
-          <div
-            className="bg-brand-card border border-brand-border rounded-2xl p-6 animate-fade-up"
-            style={{ opacity: 0 }}
-          >
-            <h2 className="font-display text-sm tracking-widest text-brand-muted uppercase mb-6">
-              📊 Médias Históricas por Horário
-            </h2>
-            <HourlyChart parkId={parkId} />
           </div>
         )}
 

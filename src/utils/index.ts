@@ -29,6 +29,27 @@ export function formatDateBR(dateStr: string): string {
   return `${d}/${m}/${y}`;
 }
 
+/** Converte um horário "HH:MM" em minutos desde a meia-noite */
+export function minutesFromTimeLabel(label: string): number {
+  const [h, m] = label.split(':').map(Number);
+  return h * 60 + m;
+}
+
+/**
+ * Escolhe um rótulo "HH:MM" por hora (o primeiro encontrado) pra usar como
+ * tick de eixo X — mais robusto do que filtrar por `endsWith(':00')`, já que
+ * a coleta real nem sempre cai exatamente na hora cheia (ex: "10:02", "11:02").
+ */
+export function pickHourlyTicks(labels: string[]): string[] {
+  const seenHours = new Set<string>();
+  return labels.filter((label) => {
+    const hour = label.split(':')[0];
+    if (seenHours.has(hour)) return false;
+    seenHours.add(hour);
+    return true;
+  });
+}
+
 /** Retorna o nome do mês em PT-BR */
 export const MONTH_NAMES_PT: Record<number, string> = {
   1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril',

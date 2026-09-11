@@ -1,7 +1,7 @@
 import type {
   Park, HourlyAverage, CalendarData,
   HeatmapDataPoint, LiveRide, DailyEvolutionPoint, ApiResponse,
-  ForecastData, BacktestPoint,
+  ForecastData, BacktestPoint, RideStats, RideHeatmapHistoryPoint, RideHistoricalProfilePoint,
 } from '@/types';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
@@ -75,6 +75,22 @@ export const api = {
 
   getLive: (parkId: number) =>
     get<LiveRide[]>(`/parks/${parkId}/live`),
+
+  getRideStats: (parkId: number, rideName: string, date: string) =>
+    get<RideStats>(`/parks/${parkId}/rides/stats?name=${encodeURIComponent(rideName)}&date=${date}`),
+
+  getRideHeatmapHistory: (parkId: number, rideName: string, days = 14, interval = 30) =>
+    get<RideHeatmapHistoryPoint[]>(
+      `/parks/${parkId}/rides/heatmap-history?name=${encodeURIComponent(rideName)}&days=${days}&interval=${interval}`
+    ),
+
+  getRideHistoricalProfile: (parkId: number, rideName: string, interval = 15) =>
+    get<RideHistoricalProfilePoint[]>(
+      `/parks/${parkId}/rides/historical-profile?name=${encodeURIComponent(rideName)}&interval=${interval}`
+    ),
+
+  getParkHistoricalProfile: (parkId: number, interval = 15) =>
+    get<RideHistoricalProfilePoint[]>(`/parks/${parkId}/historical-profile?interval=${interval}`),
 
   getForecast: (parkId: number, days = 14) =>
     get<ForecastData>(`/parks/${parkId}/forecast?days=${days}`),
