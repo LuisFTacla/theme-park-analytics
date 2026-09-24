@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@/hooks/useQuery";
 import { api } from "@/services/api";
-import { Skeleton, ErrorMessage } from "@/components/ui";
+import { Skeleton, ErrorMessage, EmptyState } from "@/components/ui";
 import { waitTimeColor, minutesFromTimeLabel } from "@/utils";
 import { isParkOpenNow } from "@/utils/parkSchedule";
 import { computeTrend, type TrendPoint } from "@/utils/trend";
@@ -11,30 +11,41 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Sparkline } from "@/components/Sparkline";
 import { TrendIndicator } from "@/components/TrendIndicator";
 import { RideDetailModal } from "@/components/RideDetailModal";
-import type { LiveRide, HeatmapInterval } from "@/types";
+import type { HeatmapInterval } from "@/types";
 
 interface Props {
   parkId: number;
-  date: string; // YYYY-MM-DD, dia atual do parque (fuso local)
+  date: string;     // YYYY-MM-DD, dia sendo visualizado
+  isToday: boolean; // dia atual do parque (fuso local) -- alterna a fonte dos cards
 }
 
 // Granularidade usada só para o sparkline/tendência de cada card — não é
 // configurável pelo usuário, diferente do heatmap grande da aba "Hoje no Parque".
 const TREND_INTERVAL: HeatmapInterval = 15;
 
-export function LiveRidesSection({ parkId, date }: Props) {
+interface RideCard {
+  name: string;
+  /** Hoje: fila ao vivo agora. Dia passado: média das filas do dia. */
+  value: number;
+  /** Hoje: atração aberta agora. Dia passado: teve fila registrada nesse dia. */
+  operating: boolean;
+}
+
+export function LiveRidesSection({ parkId, date, isToday }: Props) {
   const {
-    data: rides,
-    loading,
-    error,
-  } = useQuery<LiveRide[]>(() => api.getLive(parkId), [parkId]);
+    data: liveRides,
+    loading: loadingLive,
+    error: errorLive,
+  } = useQuery(() => api.getLive(parkId), [parkId], { enabled: isToday });
 
-  const { data: heatmap } = useQuery(
-    () => api.getHeatmap(parkId, date, TREND_INTERVAL),
-    [parkId, date]
-  );
+  const {
+    data: heatmap,
+    loading: loadingHeatmap,
+    error: errorHeatmap,
+  } = useQuery(() => api.getHeatmap(parkId, date, TREND_INTERVAL), [parkId, date]);
 
-  // Série do dia por atração, usada tanto pro sparkline quanto pro cálculo de tendência.
+  // Série do dia por atração, usada tanto pro sparkline quanto pro cálculo de
+  // tendência -- igual nos dois modos, é sempre a mesma data sendo olhada.
   const seriesByRide = useMemo(() => {
     const raw = new Map<string, TrendPoint[]>();
     if (!heatmap) return raw;
@@ -64,47 +75,68 @@ export function LiveRidesSection({ parkId, date }: Props) {
     return max;
   }, [seriesByRide]);
 
+  // O parque pode estar fechado (feriado/dia sem operação ou fora do
+  // horário de funcionamento) mesmo que a atração ainda informe fila —
+  // nesses casos, ignoramos o dado ao vivo e tratamos tudo como fechado.
+  // Só se aplica ao modo "hoje"; um dia passado já reflete o que aconteceu.
+  const parkClosed = isToday && !isParkOpenNow(parkId);
+
+  const cards = useMemo<RideCard[]>(() => {
+    if (isToday) {
+      if (!liveRides) return [];
+      return liveRides.map(r => ({
+        name: r.name,
+        value: parkClosed ? 0 : r.wait_time,
+        operating: !parkClosed && r.is_open && r.wait_time > 0,
+      }));
+    }
+
+    // Dia passado: agrega o heatmap por atração (média só dos blocos com
+    // fila > 0, senão o "fechado" contando como zero puxaria a média pra baixo).
+    if (!heatmap) return [];
+    const byName = new Map<string, { soma: number; blocos: number }>();
+    for (const point of heatmap) {
+      const acc = byName.get(point.name) ?? { soma: 0, blocos: 0 };
+      if (point.wait_time_medio > 0) {
+        acc.soma += point.wait_time_medio;
+        acc.blocos += 1;
+      }
+      byName.set(point.name, acc);
+    }
+    return [...byName.entries()].map(([name, { soma, blocos }]) => ({
+      name,
+      value: blocos > 0 ? soma / blocos : 0,
+      operating: blocos > 0,
+    }));
+  }, [isToday, liveRides, heatmap, parkClosed]);
+
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedRide, setSelectedRide] = useState<string | null>(null);
 
-  // O parque pode estar fechado (feriado/dia sem operação ou fora do
-  // horário de funcionamento) mesmo que a atração ainda informe fila —
-  // nesses casos, ignoramos o dado da API e tratamos tudo como fechado.
-  const parkClosed = !isParkOpenNow(parkId);
-
-  const effectiveRides = useMemo(() => {
-    if (!rides) return rides;
-    if (!parkClosed) return rides;
-    return rides.map((r) => ({ ...r, is_open: false, wait_time: 0 }));
-  }, [rides, parkClosed]);
-
-  const processedRides = useMemo(() => {
-    if (!effectiveRides || effectiveRides.length === 0) return [];
-
-    const normalized = effectiveRides.map((r) => ({
-      ...r,
-      realIsOpen: r.is_open && r.wait_time > 0,
-    }));
-
+  const processedCards = useMemo(() => {
+    if (!cards.length) return [];
     if (!isExpanded) {
-      return normalized
-        .filter((r) => r.realIsOpen)
-        .sort((a, b) => b.wait_time - a.wait_time)
+      return [...cards]
+        .filter(c => c.operating)
+        .sort((a, b) => b.value - a.value)
         .slice(0, 4);
-    } else {
-      return normalized.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
     }
-  }, [effectiveRides, isExpanded]);
+    return [...cards].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  }, [cards, isExpanded]);
 
   const metrics = useMemo(() => {
-    if (!effectiveRides) return { open: 0, closed: 0 };
-    const open = effectiveRides.filter((r) => r.is_open && r.wait_time > 0).length;
-    return { open, closed: effectiveRides.length - open };
-  }, [effectiveRides]);
+    const operating = cards.filter(c => c.operating).length;
+    return { operating, notOperating: cards.length - operating };
+  }, [cards]);
+
+  const loading = isToday ? loadingLive : loadingHeatmap;
+  const error = isToday ? errorLive : errorHeatmap;
 
   if (loading) return <Skeleton className="h-32 w-full rounded-xl" />;
   if (error) return <ErrorMessage message={error} />;
-  if (!rides || rides.length === 0) return null;
+  if (!cards.length) return <EmptyState message="Sem dados de fila para este dia." />;
+
+  const titleCollapsed = isToday ? "🔥 Maiores Filas no Momento" : "🔥 Maiores Filas do Dia";
 
   return (
     <div className="space-y-6">
@@ -113,11 +145,11 @@ export function LiveRidesSection({ parkId, date }: Props) {
         <div className="flex gap-3">
           <span className="flex items-center gap-2 font-display text-xs font-bold tracking-wider text-green-400 bg-green-500/10 px-3 py-1 rounded-lg border border-green-500/20">
             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            {metrics.open} Abertas
+            {metrics.operating} {isToday ? "Abertas" : "Operaram"}
           </span>
           <span className="flex items-center gap-2 font-display text-xs font-bold tracking-wider text-brand-red bg-brand-red/10 px-3 py-1 rounded-lg border border-brand-red/20">
             <span className="w-2 h-2 rounded-full bg-brand-red" />
-            {metrics.closed} Fechadas
+            {metrics.notOperating} {isToday ? "Fechadas" : "Sem registro"}
           </span>
         </div>
 
@@ -135,7 +167,7 @@ export function LiveRidesSection({ parkId, date }: Props) {
             </>
           ) : (
             <>
-              Exibir tudo ({rides.length})
+              Exibir tudo ({cards.length})
               <ChevronDown
                 size={14}
                 className="transition-transform duration-300 group-hover:translate-y-0.5"
@@ -157,9 +189,7 @@ export function LiveRidesSection({ parkId, date }: Props) {
             exit={{ opacity: 0, x: 6 }}
             transition={{ duration: 0.2 }}
           >
-            {isExpanded
-              ? "⚡ Todas as Atrações"
-              : "🔥 Maiores Filas no Momento"}
+            {isExpanded ? "⚡ Todas as Atrações" : titleCollapsed}
           </motion.h2>
         </AnimatePresence>
 
@@ -173,17 +203,17 @@ export function LiveRidesSection({ parkId, date }: Props) {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
           >
-            {processedRides.map((ride, index) => {
-              const badgeColor = waitTimeColor(ride.wait_time);
-              const isClosed = !ride.realIsOpen;
-              const series = seriesByRide.get(ride.name) ?? [];
+            {processedCards.map((card, index) => {
+              const badgeColor = waitTimeColor(card.value);
+              const isClosed = !card.operating;
+              const series = seriesByRide.get(card.name) ?? [];
               const trend = !isClosed && series.length >= 2 ? computeTrend(series) : null;
 
               return (
                 // Cada card entra de forma escalonada
                 <motion.div
-                  key={ride.id}
-                  onClick={() => setSelectedRide(ride.name)}
+                  key={card.name}
+                  onClick={() => setSelectedRide(card.name)}
                   role="button"
                   tabIndex={0}
                   className={`
@@ -204,7 +234,7 @@ export function LiveRidesSection({ parkId, date }: Props) {
                   }}
                 >
                   <span className="font-display text-sm font-medium text-zinc-300 line-clamp-1">
-                    {ride.name}
+                    {card.name}
                   </span>
 
                   <div className="h-8 -mx-1">
@@ -215,7 +245,7 @@ export function LiveRidesSection({ parkId, date }: Props) {
                     {!isClosed ? (
                       <>
                         <span className="font-mono text-3xl font-bold tracking-tight text-white">
-                          {ride.wait_time}
+                          {Math.round(card.value)}
                           <span className="text-xs font-body text-zinc-400 font-normal ml-1">
                             min
                           </span>

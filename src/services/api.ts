@@ -2,6 +2,7 @@ import type {
   Park, HourlyAverage, CalendarData,
   HeatmapDataPoint, LiveRide, DailyEvolutionPoint, ApiResponse,
   ForecastData, BacktestPoint, RideStats, RideHeatmapHistoryPoint, RideHistoricalProfilePoint,
+  ShowSession,
 } from '@/types';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
@@ -97,4 +98,7 @@ export const api = {
 
   getBacktest: (parkId: number) =>
     get<BacktestPoint[]>(`/parks/${parkId}/backtest`),
+
+  getShows: (parkId: number, date: string) =>
+    get<ShowSession[]>(`/parks/${parkId}/shows?date=${date}`),
 };

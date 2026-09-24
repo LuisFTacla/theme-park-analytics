@@ -1,10 +1,14 @@
 import { useQuery } from '@/hooks/useQuery';
 import { api } from '@/services/api';
 import { Skeleton, ErrorMessage, EmptyState } from '@/components/ui';
-import { waitTimeColor } from '@/utils';
+import { waitTimeColor, minutesFromTimeLabel } from '@/utils';
 import { buildTimeColumnLayout } from '@/utils/heatmapLayout';
+import { SHOW_ORDER, SHOW_VENUES } from '@/config/showVenues';
 import type { HeatmapInterval } from '@/types';
 import { useMemo } from 'react';
+
+const SHOW_LINE_H = 5;
+const SHOW_LINE_GAP = 1;
 
 interface Props {
   parkId: number;
@@ -17,6 +21,10 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
     () => api.getHeatmap(parkId, date, interval),
     [parkId, date, interval]
   );
+
+  // Sem show pra esse parque/dia, `shows` fica vazio e nada é destacado --
+  // não precisa de tratamento especial pros parques que não são o BCW.
+  const { data: shows } = useQuery(() => api.getShows(parkId, date), [parkId, date]);
 
   const { rides, times, matrix } = useMemo(() => {
     if (!data?.length) return { rides: [], times: [], matrix: {} };
@@ -47,6 +55,40 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
     return { rides, times, matrix };
   }, [data]);
 
+  // Shows que têm cor definida (exclui o Portal da Escuridão, que não é um
+  // show com sessões) e apareceram nesse dia, ordenados pela ordem canônica
+  // -- cada um sempre ocupa a mesma raia, esteja ativo ou não numa coluna.
+  const presentShowNames = useMemo(() => {
+    if (!shows?.length) return [];
+    const named = new Set(shows.filter(s => SHOW_VENUES[s.nome]?.color).map(s => s.nome));
+    return SHOW_ORDER.filter(name => named.has(name));
+  }, [shows]);
+
+  const showLaneIndex = useMemo(
+    () => new Map(presentShowNames.map((name, i) => [name, i])),
+    [presentShowNames]
+  );
+
+  // Por coluna de horário, quais shows (com raia) se sobrepõem a ela.
+  const showsByColumn = useMemo(() => {
+    const map = new Map<number, string[]>();
+    if (!shows?.length || !times.length) return map;
+
+    times.forEach((t, ti) => {
+      const blocoInicio = minutesFromTimeLabel(t);
+      const blocoFim = blocoInicio + interval;
+      const ativos = new Set<string>();
+      for (const s of shows) {
+        if (!showLaneIndex.has(s.nome)) continue;
+        const inicio = minutesFromTimeLabel(s.periodo_de);
+        const fim = minutesFromTimeLabel(s.periodo_ate);
+        if (inicio < blocoFim && fim > blocoInicio) ativos.add(s.nome);
+      }
+      if (ativos.size) map.set(ti, [...ativos]);
+    });
+    return map;
+  }, [shows, times, interval, showLaneIndex]);
+
   if (loading) return <Skeleton className="h-72 w-full" />;
   if (error)   return <ErrorMessage message={error} />;
   if (!rides.length) return <EmptyState message="Sem dados de atrações para este dia." />;
@@ -54,8 +96,16 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
   const CELL_W  = 28; // px por coluna de tempo
   const CELL_H  = 32; // px por linha de atração
   const LABEL_W = 160;
-  const LABEL_H = 40;
+  const BASE_LABEL_H = 24; // espaço só pro texto da hora cheia
   const GAP = 2;
+
+  // Uma raia de altura fixa por show presente no dia, empilhadas logo acima
+  // da grade -- por isso o cabeçalho cresce conforme quantos shows diferentes
+  // aparecem, não conforme quantos estão ativos numa coluna específica.
+  const showsHeaderH = presentShowNames.length > 0
+    ? presentShowNames.length * (SHOW_LINE_H + SHOW_LINE_GAP) + 4
+    : 0;
+  const LABEL_H = BASE_LABEL_H + showsHeaderH;
 
   // Na fronteira de hora cheia o espaçamento total vira o dobro do normal
   const columns = buildTimeColumnLayout(times, CELL_W, GAP, GAP);
@@ -82,6 +132,15 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
             <span style={{ color: text ?? '#4a4a6a' }}>{label}</span>
           </span>
         ))}
+        {presentShowNames.map(name => (
+          <span key={name} className="flex items-center gap-1.5">
+            <span
+              className="inline-block w-3 h-1.5 rounded-sm"
+              style={{ background: SHOW_VENUES[name].color }}
+            />
+            <span>{name}</span>
+          </span>
+        ))}
       </div>
 
       <svg
@@ -99,7 +158,7 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
             <text
               key={t}
               x={x}
-              y={LABEL_H - 8}
+              y={BASE_LABEL_H - 8}
               textAnchor="middle"
               fontSize={9}
               fill="#4a4a6a"
@@ -109,6 +168,26 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
             </text>
           ) : null;
         })}
+
+        {/* Raias de shows em cartaz — uma por show, sempre na mesma posição */}
+        {[...showsByColumn.entries()].flatMap(([ti, names]) =>
+          names.map(name => {
+            const lane = showLaneIndex.get(name)!;
+            return (
+              <rect
+                key={`show-${times[ti]}-${name}`}
+                x={LABEL_W + columns.x[ti]}
+                y={BASE_LABEL_H + lane * (SHOW_LINE_H + SHOW_LINE_GAP)}
+                width={CELL_W}
+                height={SHOW_LINE_H}
+                rx={1.5}
+                fill={SHOW_VENUES[name].color}
+              >
+                <title>{`${name} às ${times[ti]}`}</title>
+              </rect>
+            );
+          })
+        )}
 
         {/* Linhas de atrações */}
         {rides.map((ride, ri) => {

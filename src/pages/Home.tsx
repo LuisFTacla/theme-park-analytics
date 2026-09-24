@@ -406,7 +406,18 @@ export function Home() {
               <div className="space-y-8 pt-2">
                 {[
                   {
-                    version: 'v3.0', label: 'Atual',
+                    version: 'v4.0', label: 'Atual',
+                    items: [
+                      '🎭 Horários de Shows: nova fonte de dados oficial do parque — grade de shows do dia abaixo da evolução geral, destaque das sessões no heatmap (uma cor por show) e marcadores animados no mapa (prestes a começar, em exibição, saída do público).',
+                      '🚗 Turbo Drive rastreado: coleta de filas do BCW passou a usar a API oficial do parque como fonte principal (Queue-Times vira reserva), cobrindo atrações que a fonte antiga não via.',
+                      '🕐 "Maiores Filas" em Dias Passados: o card de destaque agora funciona pra qualquer data, mostrando a média do dia e a curva de fila em vez de só o tempo real de hoje.',
+                      '📊 Movimento por Horário: de volta o gráfico de barras com as médias históricas por hora dentro do detalhe de cada atração.',
+                      '🎪 Sessões no Calendário: o calendário de lotação agora mostra quantas sessões de show aconteceram em cada dia.',
+                      '⚖️ Círculos do Mapa Recalibrados: o tamanho dos círculos de fila no mapa animado passou a escalar pela área (não pelo raio), corrigindo dias de fila muito cheia que ficavam do mesmo tamanho.',
+                    ],
+                  },
+                  {
+                    version: 'v3.0', label: null,
                     items: [
                       '🌎 Múltiplos Parques e Resorts: cartões na Home combinam a fila de vários parques do mesmo grupo (Disney, Universal, Six Flags e outros), com tendência e sparkline por grupo.',
                       '🔍 Detalhe por Atração: clique em qualquer atração abre um painel com evolução do dia vs. média histórica, quadro de fatos (médias e máximas) e heatmap dos últimos 14 dias.',

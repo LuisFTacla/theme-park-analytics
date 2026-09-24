@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
+import L from 'leaflet';
+import { MapContainer, TileLayer, CircleMarker, Marker, Tooltip } from 'react-leaflet';
 import { useQuery } from '@/hooks/useQuery';
 import { api } from '@/services/api';
 import { Skeleton, ErrorMessage, EmptyState } from '@/components/ui';
-import { waitTimeColor, waitTimeRadius } from '@/utils';
+import { waitTimeColor, waitTimeRadius, minutesFromTimeLabel } from '@/utils';
 import { getRideCoordinate, PARK_CENTER } from '@/config/rideCoordinates';
+import { SHOW_VENUES, PORTAL_DA_ESCURIDAO } from '@/config/showVenues';
 import { Play, Pause } from 'lucide-react';
 import type { HeatmapInterval } from '@/types';
 
@@ -17,11 +19,49 @@ interface Props {
 const BASE_PLAYBACK_MS = 1200;
 const SPEEDS = [1, 2, 4, 8] as const;
 
+// Janela de destaque antes/depois de uma sessão de show ("prestes a
+// começar" / "saída do público"), em minutos.
+const SHOW_HALO_MINUTES = 30;
+
+type ShowPhase = 'upcoming' | 'ongoing' | 'dispersing' | 'open' | 'closed';
+
+const PHASE_LABEL: Record<ShowPhase, string> = {
+  upcoming: 'Prestes a começar',
+  ongoing: 'Em exibição',
+  dispersing: 'Saída do público',
+  open: 'Aberto',
+  closed: 'Fechado',
+};
+
+function buildShowIcon(icon: string, color: string | undefined, phase: ShowPhase) {
+  const ringColor = color ?? '#94a3b8';
+  const active = phase === 'ongoing' || phase === 'open';
+  const upcoming = phase === 'upcoming';
+  const faded = phase === 'dispersing' || phase === 'closed';
+
+  // Fundo sempre escuro e sólido (mesma cor do card do app) -- contra a foto
+  // de satélite, um fundo semitransparente sumia de vista. A cor do show fica
+  // só na borda/brilho, que já diferencia os 3 estados.
+  const border = upcoming ? `border: 2.5px dashed ${ringColor};` : `border: 2.5px solid ${ringColor};`;
+  const glow = active
+    ? `box-shadow: 0 0 14px 2px ${ringColor}, 0 2px 6px rgba(0,0,0,0.7);`
+    : `box-shadow: 0 2px 6px rgba(0,0,0,0.7);`;
+  const opacity = faded ? 0.8 : 1;
+
+  const html = `<div style="width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#0a0a0fe6;${border}${glow}opacity:${opacity};">${icon}</div>`;
+
+  return L.divIcon({ html, className: '', iconSize: [36, 36], iconAnchor: [18, 18] });
+}
+
 export function ParkMapAnimation({ parkId, date, interval }: Props) {
   const { data, loading, error } = useQuery(
     () => api.getHeatmap(parkId, date, interval),
     [parkId, date, interval]
   );
+
+  // Sem show pra esse parque/dia, `shows` fica vazio e nenhum marcador extra
+  // é desenhado -- não precisa de tratamento especial pros demais parques.
+  const { data: shows } = useQuery(() => api.getShows(parkId, date), [parkId, date]);
 
   const { times, byTime } = useMemo(() => {
     if (!data?.length) return { times: [] as string[], byTime: {} as Record<string, typeof data> };
@@ -53,11 +93,52 @@ export function ParkMapAnimation({ parkId, date, interval }: Props) {
     return () => clearInterval(timer);
   }, [playing, speed, times.length]);
 
+  const currentTime = times[index] ?? '';
+
+  // Marcadores de show pro instante selecionado no scrubber (não a hora real
+  // do relógio) -- assim eles aparecem/somem junto com a animação do dia.
+  const showMarkers = useMemo(() => {
+    if (!shows?.length || !currentTime) return [];
+    const nowMin = minutesFromTimeLabel(currentTime);
+
+    const sessionsByName = new Map<string, { inicio: number; fim: number }[]>();
+    for (const s of shows) {
+      const list = sessionsByName.get(s.nome) ?? [];
+      list.push({ inicio: minutesFromTimeLabel(s.periodo_de), fim: minutesFromTimeLabel(s.periodo_ate) });
+      sessionsByName.set(s.nome, list);
+    }
+
+    const markers: { nome: string; phase: ShowPhase }[] = [];
+
+    for (const [nome, sessions] of sessionsByName) {
+      // Portal da Escuridão não é um show com sessões -- é um labirinto que
+      // fica simplesmente aberto ou fechado durante a janela informada.
+      if (nome === PORTAL_DA_ESCURIDAO) {
+        const isOpen = sessions.some(s => nowMin >= s.inicio && nowMin < s.fim);
+        markers.push({ nome, phase: isOpen ? 'open' : 'closed' });
+        continue;
+      }
+
+      const venue = SHOW_VENUES[nome];
+      if (!venue) continue;
+
+      for (const s of sessions) {
+        // No Ritmo de Trolls: público já se desloca bem antes da janela
+        // padrão de 30min -- ver `highlightFromHour` em showVenues.ts.
+        const preStart = venue.highlightFromHour != null ? venue.highlightFromHour * 60 : s.inicio - SHOW_HALO_MINUTES;
+        if (nowMin >= preStart && nowMin < s.inicio) { markers.push({ nome, phase: 'upcoming' }); break; }
+        if (nowMin >= s.inicio && nowMin < s.fim) { markers.push({ nome, phase: 'ongoing' }); break; }
+        if (nowMin >= s.fim && nowMin < s.fim + SHOW_HALO_MINUTES) { markers.push({ nome, phase: 'dispersing' }); break; }
+      }
+    }
+
+    return markers;
+  }, [shows, currentTime]);
+
   if (loading) return <Skeleton className="h-[480px] w-full rounded-xl" />;
   if (error) return <ErrorMessage message={error} />;
   if (!times.length) return <EmptyState message="Sem dados de atrações para este dia." />;
 
-  const currentTime = times[index];
   const currentPoints = byTime[currentTime] ?? [];
   const transitionMs = Math.min(400, Math.max(120, (BASE_PLAYBACK_MS / speed) * 0.7));
 
@@ -158,6 +239,27 @@ export function ParkMapAnimation({ parkId, date, interval }: Props) {
                   </span>
                 </Tooltip>
               </CircleMarker>
+            );
+          })}
+
+          {showMarkers.map(({ nome, phase }) => {
+            const venue = SHOW_VENUES[nome];
+            if (!venue) return null;
+
+            return (
+              <Marker
+                key={nome}
+                position={[venue.coord.lat, venue.coord.lng]}
+                icon={buildShowIcon(venue.icon, venue.color, phase)}
+              >
+                <Tooltip direction="top" offset={[0, -18]}>
+                  <span className="font-body text-xs">
+                    <strong>{nome}</strong>
+                    <br />
+                    {PHASE_LABEL[phase]}
+                  </span>
+                </Tooltip>
+              </Marker>
             );
           })}
         </MapContainer>

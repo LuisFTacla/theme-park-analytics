@@ -8,10 +8,22 @@ export function waitTimeColor(minutes: number): string {
   return '#ef4444';                    // vermelho
 }
 
-/** Raio (em px) do círculo de fila no mapa animado, escalado pelo tempo de espera */
+/**
+ * Raio (em px) do círculo de fila no mapa animado, escalado pelo tempo de
+ * espera. Usa raiz quadrada (área do círculo, não o raio, proporcional ao
+ * tempo de espera) — é a forma correta de codificar valor por tamanho de
+ * círculo em mapa; escala linear de raio faz diferenças pequenas parecerem
+ * enormes e as grandes saturarem cedo demais (ex: 90min e 200min batendo no
+ * mesmo teto e ficando do mesmo tamanho).
+ */
+const WAIT_RADIUS_MIN = 11;  // px, tempo de espera > 0
+const WAIT_RADIUS_MAX = 44;  // px, no teto da escala (WAIT_RADIUS_REF minutos ou mais)
+const WAIT_RADIUS_REF = 200; // minutos que já preenchem o círculo máximo da escala
+
 export function waitTimeRadius(minutes: number): number {
-  if (minutes <= 0) return 5;
-  return clamp(8 + minutes * 0.55, 8, 42);
+  if (minutes <= 0) return 7;
+  const t = clamp(minutes, 0, WAIT_RADIUS_REF) / WAIT_RADIUS_REF;
+  return WAIT_RADIUS_MIN + (WAIT_RADIUS_MAX - WAIT_RADIUS_MIN) * Math.sqrt(t);
 }
 
 /** Label descritivo do tempo de fila */

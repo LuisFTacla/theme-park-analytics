@@ -10,7 +10,7 @@ interface Props {
 }
 
 function MonthCard({ days, month, year }: { days: DailyAverage[]; month: number; year: number }) {
-  const CELL = 36; // px
+  const CELL = 42; // px -- espaço extra pra caber a linha de sessões de show
   const GAP  = 3;
   const rows = 6;
   const cols = 7;
@@ -87,7 +87,7 @@ return (
                   strokeWidth={isForecast ? 1.2 : 0}
                   strokeDasharray={isForecast ? '3,2' : undefined}
                 >
-                  <title>{`${day.day}/${month} — ${Math.round(day.wait_time)} min${isForecast ? ' (previsão)' : ''}`}</title>
+                  <title>{`${day.day}/${month} — ${Math.round(day.wait_time)} min${isForecast ? ' (previsão)' : ''}${day.show_sessions != null ? ` — ${day.show_sessions} sessões de show` : ''}`}</title>
                 </rect>
                 <text
                   x={x + CELL / 2}
@@ -112,6 +112,20 @@ return (
                 >
                   {Math.round(day.wait_time)}m
                 </text>
+                {day.show_sessions != null && (
+                  <text
+                    x={x + CELL / 2}
+                    y={y + CELL - 3}
+                    textAnchor="middle"
+                    fontSize={9}
+                    fill="#000"
+                    fontFamily="Space Mono"
+                    fontWeight="700"
+                    opacity={0.8}
+                  >
+                    🎭{day.show_sessions}
+                  </text>
+                )}
                 {isForecast && (
                   <text
                     x={x + CELL - 5}

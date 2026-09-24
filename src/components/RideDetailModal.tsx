@@ -12,6 +12,7 @@ import { waitTimeGradientCss } from '@/utils/waitTimeColorScale';
 import { trimToOperatingHours, toOperatingMinutes } from '@/utils/operatingHours';
 import { computeTrend, TREND_LABELS_PT, type Trend, type TrendPoint } from '@/utils/trend';
 import { RideHeatmapHistory } from '@/components/RideHeatmapHistory';
+import { RideHourlyChart } from '@/components/RideHourlyChart';
 import { waitTimeGradientDefs } from '@/components/waitTimeGradientDefs';
 import { X, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
@@ -216,6 +217,14 @@ export function RideDetailModal({ parkId, date, rideName, onClose }: Props) {
                 </div>
               </>
             )}
+          </section>
+
+          {/* Médias históricas por horário do dia */}
+          <section>
+            <h3 className="font-display text-xs tracking-widest text-brand-muted uppercase mb-3">
+              📊 Movimento por Horário
+            </h3>
+            <RideHourlyChart historicalProfile={historicalProfile} />
           </section>
 
           {/* Heatmap dos últimos 14 dias */}

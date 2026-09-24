@@ -7,6 +7,7 @@ import { EvolutionChart } from '@/components/EvolutionChart';
 import { HeatmapGrid } from '@/components/HeatmapGrid';
 import { CalendarGrid } from '@/components/CalendarGrid';
 import { LiveRidesSection } from '@/components/LiveRidesSection';
+import { ShowsSchedule } from '@/components/ShowsSchedule';
 import { ParkMapAnimation } from '@/components/ParkMapAnimation';
 import { BacktestChart } from '@/components/BacktestChart';
 import { BETO_CARRERO_PARK_ID } from '@/utils/parkSchedule';
@@ -123,14 +124,8 @@ export function Dashboard() {
             {/* Status ao vivo (apenas hoje) */}
             {/* <LiveStatus parkId={parkId} date={date} today={today} /> */}
 
-            {/* Status ao vivo e Filas (Apenas se a data for hoje) */}
-            {date === today ? (
-              <LiveRidesSection parkId={parkId} date={today} />
-            ) : (
-              <div className="text-xs font-mono text-brand-muted italic p-4 bg-brand-card rounded-xl border border-brand-border">
-                Visualizando dados históricos para o dia {date.split('-').reverse().join('/')}.
-              </div>
-            )}
+            {/* Maiores filas: ao vivo (hoje) ou média + curva do dia (datas passadas) */}
+            <LiveRidesSection parkId={parkId} date={date} isToday={date === today} />
 
             {/* Gráfico de evolução do dia */}
             <section className="animate-fade-up" style={{ animationDelay: '0.2s', opacity: 0 }}>
@@ -141,6 +136,9 @@ export function Dashboard() {
                 <EvolutionChart parkId={parkId} date={date} />
               </div>
             </section>
+
+            {/* Horários de shows do dia — some sozinho se não houver dado */}
+            <ShowsSchedule parkId={parkId} date={date} />
 
             {/* Heatmap de atrações */}
             <section className="animate-fade-up" style={{ animationDelay: '0.25s', opacity: 0 }}>
