@@ -32,6 +32,7 @@ export const RIDE_COORDINATES: Record<string, LatLng> = {
   'Super Soaker Splash':               { lat: -26.8003358, lng: -48.6154914 },
   'Star Mountain':                     { lat: -26.7996451, lng: -48.6169187 },
   'Pedalinho':                         { lat: -26.8015476, lng: -48.6126113 }, // desativado, mas com dados históricos
+  'Galinheiro das Divas':              { lat: -26.8011153, lng: -48.6144706 }, // nova atração, aberta em 2026-09
 };
 
 interface RideRelocation {

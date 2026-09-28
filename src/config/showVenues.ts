@@ -27,6 +27,8 @@ export const SHOW_ORDER = [
   'Excalibur',
   'O Sonho do Cowboy',
   'No Ritmo de Trolls',
+  'Papo de Galinheiro',
+  'O Dodói da Galinha Pintadinha',
 ];
 
 export const SHOW_VENUES: Record<string, ShowVenue> = {
@@ -48,7 +50,7 @@ export const SHOW_VENUES: Record<string, ShowVenue> = {
   'O Sonho do Cowboy': {
     coord: { lat: -26.8013495, lng: -48.6153507 },
     icon: '🤠',
-    color: '#1e40af', // azul escuro
+    color: '#d4af37', // dourado
   },
   'No Ritmo de Trolls': {
     coord: { lat: -26.8010251, lng: -48.6138914 },
@@ -60,5 +62,16 @@ export const SHOW_VENUES: Record<string, ShowVenue> = {
     coord: { lat: -26.8000548, lng: -48.6158801 },
     icon: '👻',
     // sem `color` -- não é um show com sessões, não entra no heatmap.
+  },
+  // Mesmo local (galinheiro), dois shows diferentes -- mesmo ícone e cor.
+  'Papo de Galinheiro': {
+    coord: { lat: -26.8009723, lng: -48.6147192 },
+    icon: '🐔',
+    color: '#1e40af', // azul escuro
+  },
+  'O Dodói da Galinha Pintadinha': {
+    coord: { lat: -26.8009723, lng: -48.6147192 },
+    icon: '🐔',
+    color: '#1e40af', // azul escuro
   },
 };
