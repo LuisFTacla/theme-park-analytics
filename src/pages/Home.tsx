@@ -357,7 +357,7 @@ export function Home() {
                 'Limpeza de outliers: filtros para ignorar erros de digitação de operadores (ex: 990 min).',
                 'Filtro de operação: remoção de períodos com parque fechado para preservar médias reais.',
                 'Seleção de IDs: apenas atrações mecânicas, excluindo shows e zoológico dos cálculos de lotação.',
-                'Calendário de operação: dias fechados e horário de funcionamento (10h–19h) aplicados em "Hoje no Parque", ignorando filas de painéis de atração esquecidos ligados fora do expediente.',
+                'Horário de operação: funcionamento (10h–19h) aplicado em "Hoje no Parque", ignorando filas de painéis de atração esquecidos ligados fora do expediente.',
               ].map(item => (
                 <li key={item} className="flex gap-3 text-sm">
                   <span className="text-brand-red font-mono shrink-0 mt-0.5">→</span>
@@ -414,6 +414,7 @@ export function Home() {
                       '📊 Movimento por Horário: de volta o gráfico de barras com as médias históricas por hora dentro do detalhe de cada atração.',
                       '🎪 Sessões no Calendário: o calendário de lotação agora mostra quantas sessões de show aconteceram em cada dia.',
                       '⚖️ Círculos do Mapa Recalibrados: o tamanho dos círculos de fila no mapa animado passou a escalar pela área (não pelo raio), corrigindo dias de fila muito cheia que ficavam do mesmo tamanho.',
+                      '📅 Dias Fechados ao Vivo: os dias sem operação passam a vir do calendário oficial do parque, e não mais de uma lista fixa no site, que tinha ficado desatualizada e marcava atrações abertas como fechadas.',
                     ],
                   },
                   {

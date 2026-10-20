@@ -75,8 +75,8 @@ export function LiveRidesSection({ parkId, date, isToday }: Props) {
     return max;
   }, [seriesByRide]);
 
-  // O parque pode estar fechado (feriado/dia sem operação ou fora do
-  // horário de funcionamento) mesmo que a atração ainda informe fila —
+  // O parque pode estar fora do horário de funcionamento mesmo que a
+  // atração ainda informe fila —
   // nesses casos, ignoramos o dado ao vivo e tratamos tudo como fechado.
   // Só se aplica ao modo "hoje"; um dia passado já reflete o que aconteceu.
   const parkClosed = isToday && !isParkOpenNow(parkId);
