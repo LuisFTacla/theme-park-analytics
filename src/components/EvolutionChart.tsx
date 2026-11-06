@@ -10,6 +10,8 @@ import {
   ResponsiveContainer, ComposedChart, Area, Line,
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
+import { useTheme } from '@/hooks/useTheme';
+import { chartTheme } from '@/config/chartTheme';
 
 interface Props {
   parkId: number;
@@ -21,6 +23,8 @@ interface Props {
 const HISTORICAL_INTERVAL = 15;
 
 export function EvolutionChart({ parkId, date }: Props) {
+  const { colors } = useTheme();
+  const chart = chartTheme(colors);
   const uid = useId().replace(/:/g, '');
   const { data, loading, error } = useQuery(
     () => api.getEvolution(parkId, date),
@@ -69,38 +73,32 @@ export function EvolutionChart({ parkId, date }: Props) {
           <span className="w-3 h-1.5 rounded-sm inline-block" style={{ background: waitTimeGradientCss() }} /> Hoje
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-0.5 border-t border-dashed border-brand-muted inline-block" /> Média histórica
+          <span className="w-3 h-0.5 border-t border-dashed border-brand-secondary inline-block" /> Média histórica
         </span>
       </div>
       <ResponsiveContainer width="100%" height={220}>
         <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
           {waitTimeGradientDefs({ id: uid, min, max })}
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e1e2e" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} vertical={false} />
           <XAxis
             dataKey="horario"
             ticks={ticks}
             tickFormatter={(label: string) => `${label.split(':')[0]}:00`}
-            tick={{ fill: '#4a4a6a', fontSize: 11, fontFamily: 'Space Mono' }}
+            tick={chart.tick}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
             domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.15)]}
-            tick={{ fill: '#4a4a6a', fontSize: 11, fontFamily: 'Space Mono' }}
+            tick={chart.tick}
             axisLine={false}
             tickLine={false}
             tickFormatter={(v) => `${v}m`}
           />
           <Tooltip
-            contentStyle={{
-              background: '#111118',
-              border: '1px solid #1e1e2e',
-              borderRadius: 12,
-              fontFamily: 'DM Sans',
-              color: '#fff',
-            }}
+            contentStyle={chart.tooltip}
             formatter={(v: number, name: string) => [`${Math.round(v)} min`, name === 'wait_time' ? 'Hoje' : 'Média histórica']}
-            labelStyle={{ color: '#4a4a6a', fontSize: 12 }}
+            labelStyle={chart.tooltipLabel}
           />
           <Area
             type="monotone"
@@ -110,9 +108,9 @@ export function EvolutionChart({ parkId, date }: Props) {
             fill={`url(#${uid}-fill)`}
             fillOpacity={1}
             dot={false}
-            activeDot={{ r: 5, fill: '#ef233c', stroke: '#0a0a0f', strokeWidth: 2 }}
+            activeDot={{ r: 5, fill: colors.primary, stroke: colors.card, strokeWidth: 2 }}
           />
-          <Line type="monotone" dataKey="historico" stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
+          <Line type="monotone" dataKey="historico" stroke={colors.secondary} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
         </ComposedChart>
       </ResponsiveContainer>
     </div>

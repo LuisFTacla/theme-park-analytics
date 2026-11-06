@@ -100,11 +100,11 @@ export function ParkGroupCard({ group, parks, primary = false }: Props) {
       className={clsx(
         'bg-brand-card border rounded-2xl p-4 cursor-pointer transition-all',
         'hover:border-brand-muted/40 hover:scale-[1.01] hover:shadow-md',
-        primary ? 'border-brand-red/40 bg-brand-red/5' : 'border-brand-border'
+        primary ? 'border-brand-primary/40 bg-brand-primary/5' : 'border-brand-border'
       )}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <span className="font-display text-sm font-medium text-white leading-snug line-clamp-2 min-h-[2.25rem]">
+        <span className="font-display text-sm font-medium text-brand-text leading-snug line-clamp-2 min-h-[2.25rem]">
           {group.label}
         </span>
         {trend && <span className="shrink-0 mt-0.5"><TrendIndicator trend={trend} /></span>}
@@ -117,9 +117,9 @@ export function ParkGroupCard({ group, parks, primary = false }: Props) {
       ) : (
         <>
           <div className="flex items-baseline justify-between mb-2">
-            <span className="font-mono text-2xl font-bold text-white">
+            <span className="font-mono text-2xl font-bold text-brand-text">
               {current != null ? Math.round(current) : '—'}
-              <span className="text-xs font-body text-zinc-400 font-normal ml-1">min</span>
+              <span className="text-xs font-body text-brand-muted font-normal ml-1">min</span>
             </span>
             {current != null && (
               <span className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: waitTimeColor(current) }} />
@@ -146,10 +146,10 @@ export function ParkGroupCard({ group, parks, primary = false }: Props) {
                   e.stopPropagation();
                   goToPark(id);
                 }}
-                className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs font-body bg-brand-dark border border-brand-border text-brand-muted hover:text-white hover:border-brand-muted transition-all"
+                className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs font-body bg-brand-bg border border-brand-border text-brand-muted hover:text-brand-text hover:border-brand-muted transition-all"
               >
                 <span className="truncate">{name}</span>
-                <span className="flex items-center gap-1.5 shrink-0 font-mono text-white">
+                <span className="flex items-center gap-1.5 shrink-0 font-mono text-brand-text">
                   {parkCurrent != null ? `${Math.round(parkCurrent)} min` : '—'}
                   {parkCurrent != null && (
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: waitTimeColor(parkCurrent) }} />

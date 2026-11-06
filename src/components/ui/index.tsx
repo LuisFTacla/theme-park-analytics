@@ -44,9 +44,9 @@ export function Badge({
   variant?: BadgeVariant;
 }) {
   const styles: Record<BadgeVariant, string> = {
-    green:  'bg-green-500/20 text-green-400 border-green-500/30',
-    red:    'bg-red-500/20 text-red-400 border-red-500/30',
-    yellow: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+    green:  'bg-status-ok/20 text-status-ok border-status-ok/30',
+    red:    'bg-status-danger/20 text-status-danger border-status-danger/30',
+    yellow: 'bg-status-warn/20 text-status-warn border-status-warn/30',
     muted:  'bg-brand-border text-brand-muted border-transparent',
   };
   return (
@@ -69,7 +69,7 @@ export function Spinner({ size = 20 }: { size?: number }) {
       height={size}
       viewBox="0 0 24 24"
       fill="none"
-      className="animate-spin text-brand-red"
+      className="animate-spin text-brand-primary"
     >
       <circle
         cx="12" cy="12" r="10"
@@ -93,7 +93,7 @@ export function Spinner({ size = 20 }: { size?: number }) {
 // ─── ERROR MESSAGE ────────────────────────────────────────────────────────────
 export function ErrorMessage({ message }: { message: string }) {
   return (
-    <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-body">
+    <div className="flex items-center gap-3 p-4 rounded-xl bg-status-danger/10 border border-status-danger/20 text-status-danger text-sm font-body">
       <span className="text-lg">⚠</span>
       {message}
     </div>

@@ -6,6 +6,8 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
 import { useMemo, useState } from 'react';
+import { useTheme } from '@/hooks/useTheme';
+import { chartTheme } from '@/config/chartTheme';
 
 interface Props {
   parkId: number;
@@ -13,6 +15,8 @@ interface Props {
 }
 
 export function ForecastChart({ parkId, days = 14 }: Props) {
+  const { colors } = useTheme();
+  const chart = chartTheme(colors);
   const { data, loading, error } = useQuery(
     () => api.getForecast(parkId, days),
     [parkId, days]
@@ -49,8 +53,8 @@ export function ForecastChart({ parkId, days = 14 }: Props) {
             onClick={() => setSelected(r)}
             className={`px-3 py-1.5 rounded-lg text-sm font-body transition-all border ${
               currentRide === r
-                ? 'bg-brand-red border-brand-red text-white'
-                : 'bg-brand-card border-brand-border text-brand-muted hover:text-white hover:border-brand-muted'
+                ? 'bg-brand-button border-brand-button text-white'
+                : 'bg-brand-card border-brand-border text-brand-muted hover:text-brand-text hover:border-brand-muted'
             }`}
           >
             {r}
@@ -67,14 +71,14 @@ export function ForecastChart({ parkId, days = 14 }: Props) {
 
       <ResponsiveContainer width="100%" height={260}>
         <LineChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e1e2e" vertical={false} />
-          <XAxis dataKey="data" tick={{ fill: '#4a4a6a', fontSize: 11, fontFamily: 'Space Mono' }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fill: '#4a4a6a', fontSize: 11, fontFamily: 'Space Mono' }} axisLine={false} tickLine={false} tickFormatter={v => `${v}m`} />
+          <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} vertical={false} />
+          <XAxis dataKey="data" tick={chart.tick} axisLine={false} tickLine={false} />
+          <YAxis tick={chart.tick} axisLine={false} tickLine={false} tickFormatter={v => `${v}m`} />
           <Tooltip
-            contentStyle={{ background: '#111118', border: '1px solid #1e1e2e', borderRadius: 12, fontFamily: 'DM Sans', color: '#fff' }}
+            contentStyle={chart.tooltip}
             formatter={(v: number) => [`${Math.round(v)} min`, 'Previsão']}
           />
-          <Line type="monotone" dataKey="wait" stroke="#ef233c" strokeWidth={2.5} dot={{ r: 3 }} />
+          <Line type="monotone" dataKey="wait" stroke={colors.primary} strokeWidth={2.5} dot={{ r: 3 }} />
         </LineChart>
       </ResponsiveContainer>
     </div>

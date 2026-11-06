@@ -3,6 +3,7 @@ import { useQuery } from '@/hooks/useQuery';
 import { api } from '@/services/api';
 import { Skeleton, ErrorMessage, EmptyState } from '@/components/ui';
 import { waitTimeColor } from '@/utils';
+import { useTheme } from '@/hooks/useTheme';
 import { buildTimeColumnLayout } from '@/utils/heatmapLayout';
 
 interface Props {
@@ -25,6 +26,7 @@ export function RideHeatmapHistory({ parkId, rideName, days = 14 }: Props) {
     () => api.getRideHeatmapHistory(parkId, rideName, days, INTERVAL),
     [parkId, rideName, days]
   );
+  const { colors } = useTheme();
 
   const { dates, times, matrix, avgRow } = useMemo(() => {
     if (!data?.length) return { dates: [] as string[], times: [] as string[], matrix: {} as Record<string, Record<string, number | null>>, avgRow: {} as Record<string, number | null> };
@@ -76,7 +78,7 @@ export function RideHeatmapHistory({ parkId, rideName, days = 14 }: Props) {
   const svgH = LABEL_H + gridH + AVG_GAP + (CELL_H + GAP);
 
   const renderCell = (val: number | null, cx: number, y: number, title: string) => {
-    const fill = val !== null ? waitTimeColor(val) : '#1e1e2e';
+    const fill = val !== null ? waitTimeColor(val) : colors.border;
     const opacity = val !== null ? 1 : 0.4;
     return (
       <g key={`${cx}-${y}`}>
@@ -95,7 +97,7 @@ export function RideHeatmapHistory({ parkId, rideName, days = 14 }: Props) {
           const x = LABEL_W + columns.x[ti] + CELL_W / 2;
           if (!t.endsWith(':00')) return null;
           return (
-            <text key={t} x={x} y={LABEL_H - 8} textAnchor="middle" fontSize={9} fill="#4a4a6a" fontFamily="Space Mono">
+            <text key={t} x={x} y={LABEL_H - 8} textAnchor="middle" fontSize={9} fill={colors.subtle} fontFamily="Space Mono">
               {t}
             </text>
           );
@@ -106,7 +108,7 @@ export function RideHeatmapHistory({ parkId, rideName, days = 14 }: Props) {
           const y = LABEL_H + di * (CELL_H + GAP);
           return (
             <g key={dt}>
-              <text x={LABEL_W - 8} y={y + CELL_H / 2 + 4} textAnchor="end" fontSize={11} fill="#c0c0d0" fontFamily="Space Mono">
+              <text x={LABEL_W - 8} y={y + CELL_H / 2 + 4} textAnchor="end" fontSize={11} fill={colors.text} fontFamily="Space Mono">
                 {shortDateLabel(dt)}
               </text>
               {times.map((t, ti) => {
@@ -124,7 +126,7 @@ export function RideHeatmapHistory({ parkId, rideName, days = 14 }: Props) {
             const y = LABEL_H + gridH + AVG_GAP;
             return (
               <>
-                <text x={LABEL_W - 8} y={y + CELL_H / 2 + 4} textAnchor="end" fontSize={11} fontWeight={700} fill="#ffffff" fontFamily="Space Mono">
+                <text x={LABEL_W - 8} y={y + CELL_H / 2 + 4} textAnchor="end" fontSize={11} fontWeight={700} fill={colors.text} fontFamily="Space Mono">
                   Média
                 </text>
                 {times.map((t, ti) => {
@@ -142,7 +144,7 @@ export function RideHeatmapHistory({ parkId, rideName, days = 14 }: Props) {
           if (ti === 0 || !t.endsWith(':00')) return null;
           const x = LABEL_W + columns.x[ti] - GAP;
           return (
-            <line key={`divider-${t}`} x1={x} y1={LABEL_H} x2={x} y2={svgH} stroke="#ffffff" strokeOpacity={0.4} strokeWidth={1} />
+            <line key={`divider-${t}`} x1={x} y1={LABEL_H} x2={x} y2={svgH} stroke={colors.text} strokeOpacity={0.4} strokeWidth={1} />
           );
         })}
       </svg>

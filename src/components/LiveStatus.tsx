@@ -31,7 +31,7 @@ export function LiveStatus({ parkId, date, today }: Props) {
           <button
             onClick={refetch}
             disabled={loading}
-            className="p-1.5 rounded-lg hover:bg-brand-border transition-colors text-brand-muted hover:text-white disabled:opacity-40"
+            className="p-1.5 rounded-lg hover:bg-brand-border transition-colors text-brand-muted hover:text-brand-text disabled:opacity-40"
           >
             <RefreshCw size={14} className={clsx(loading && 'animate-spin')} />
           </button>
@@ -56,17 +56,17 @@ export function LiveStatus({ parkId, date, today }: Props) {
                   key={ride.id}
                   className={clsx(
                     'flex flex-col gap-1 transition-all',
-                    i === 0 && 'border-brand-red/40 bg-brand-red/5'
+                    i === 0 && 'border-brand-primary/40 bg-brand-primary/5'
                   )}
                 >
                   <span className="font-body text-xs text-brand-muted truncate">{ride.name}</span>
-                  <span className="font-display text-3xl text-white">
+                  <span className="font-display text-3xl text-brand-text">
                     {ride.wait_time}
                     <span className="text-sm text-brand-muted ml-1">min</span>
                   </span>
                   {i === 0 && (
-                    <span className="inline-flex items-center gap-1 text-xs text-brand-red font-mono">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-red animate-pulse-dot" />
+                    <span className="inline-flex items-center gap-1 text-xs text-brand-primary font-mono">
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand-highlight animate-pulse-dot" />
                       Maior fila
                     </span>
                   )}

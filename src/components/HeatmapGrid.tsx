@@ -1,14 +1,24 @@
 import { useQuery } from '@/hooks/useQuery';
 import { api } from '@/services/api';
 import { Skeleton, ErrorMessage, EmptyState } from '@/components/ui';
-import { waitTimeColor, minutesFromTimeLabel } from '@/utils';
-import { buildTimeColumnLayout } from '@/utils/heatmapLayout';
+import { waitTimeColor, minutesFromTimeLabel, WAIT_TIME_BANDS } from '@/utils';
+import { useTheme } from '@/hooks/useTheme';
+import { buildTimeColumnLayout, fitCellWidth } from '@/utils/heatmapLayout';
+import { useElementWidth } from '@/hooks/useElementWidth';
 import { SHOW_ORDER, SHOW_VENUES } from '@/config/showVenues';
 import type { HeatmapInterval } from '@/types';
 import { useMemo } from 'react';
 
 const SHOW_LINE_H = 5;
 const SHOW_LINE_GAP = 1;
+
+// A grade se ajusta à largura do card: as células encolhem até MIN_CELL_W e
+// só abaixo disso a grade volta a rolar na horizontal.
+const MIN_CELL_W = 6;
+const MAX_CELL_W = 40;
+const MIN_CELL_W_FOR_NUMBERS = 22; // abaixo disso o número não cabe na célula
+const MIN_HOUR_LABEL_SPACING = 30; // px entre rótulos de hora ("10h")
+const NARROW_SCREEN = 640;
 
 interface Props {
   parkId: number;
@@ -25,6 +35,8 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
   // Sem show pra esse parque/dia, `shows` fica vazio e nada é destacado --
   // não precisa de tratamento especial pros parques que não são o BCW.
   const { data: shows } = useQuery(() => api.getShows(parkId, date), [parkId, date]);
+  const { colors } = useTheme();
+  const [containerRef, containerWidth] = useElementWidth<HTMLDivElement>();
 
   const { rides, times, matrix } = useMemo(() => {
     if (!data?.length) return { rides: [], times: [], matrix: {} };
@@ -93,11 +105,23 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
   if (error)   return <ErrorMessage message={error} />;
   if (!rides.length) return <EmptyState message="Sem dados de atrações para este dia." />;
 
-  const CELL_W  = 28; // px por coluna de tempo
-  const CELL_H  = 32; // px por linha de atração
-  const LABEL_W = 160;
+  const LABEL_W = containerWidth && containerWidth < NARROW_SCREEN ? 96 : 160;
+  const maxNameChars = Math.floor((LABEL_W - 8) / 6.2);
   const BASE_LABEL_H = 24; // espaço só pro texto da hora cheia
-  const GAP = 2;
+
+  // Células muito estreitas ficam com gap de 1px pra sobrar mais área colorida
+  const gridWidth = (containerWidth || LABEL_W + times.length * 30) - LABEL_W;
+  const roughCellW = fitCellWidth(times, gridWidth, 2, MIN_CELL_W, MAX_CELL_W);
+  const GAP = roughCellW < 10 ? 1 : 2;
+  const CELL_W = fitCellWidth(times, gridWidth, GAP, MIN_CELL_W, MAX_CELL_W);
+  const showNumbers = CELL_W >= MIN_CELL_W_FOR_NUMBERS;
+  const CELL_H = showNumbers ? 32 : 24;
+  const cellRadius = Math.min(4, CELL_W / 4);
+
+  // Com células estreitas, rotula só de N em N horas pra não encavalar
+  const hourWidth = (CELL_W + GAP) * (60 / interval) + GAP;
+  const hourLabelStep = Math.max(1, Math.ceil(MIN_HOUR_LABEL_SPACING / hourWidth));
+  const firstHour = Number(times[0].split(':')[0]);
 
   // Uma raia de altura fixa por show presente no dia, empilhadas logo acima
   // da grade -- por isso o cabeçalho cresce conforme quantos shows diferentes
@@ -113,23 +137,16 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
   const svgH = LABEL_H + rides.length * (CELL_H + GAP);
 
   return (
-    <div className="overflow-x-auto overflow-y-hidden rounded-xl">
+    <div ref={containerRef} className="overflow-x-auto overflow-y-hidden rounded-xl">
       {/* Legenda */}
-      <div className="flex items-center gap-4 mb-3 text-xs font-mono text-brand-muted">
-        {[
-          { label: 'Vazio',       color: '#4ade80' },
-          { label: 'Tranquilo',   color: '#a3e635' },
-          { label: 'Médio',       color: '#facc15' },
-          { label: 'Movimentado', color: '#fb923c' },
-          { label: 'Lotado',      color: '#ef4444' },
-          { label: 'Fechado',     color: '#1e1e2e', text: '#4a4a6a' },
-        ].map(({ label, color, text }) => (
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-3 text-xs font-mono text-brand-muted">
+        {[...WAIT_TIME_BANDS, { label: 'Fechado', color: colors.border }].map(({ label, color }) => (
           <span key={label} className="flex items-center gap-1.5">
             <span
               className="inline-block w-3 h-3 rounded-sm"
               style={{ background: color }}
             />
-            <span style={{ color: text ?? '#4a4a6a' }}>{label}</span>
+            <span>{label}</span>
           </span>
         ))}
         {presentShowNames.map(name => (
@@ -152,8 +169,9 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
         {/* Cabeçalho de horários */}
         {times.map((t, ti) => {
           const x = LABEL_W + columns.x[ti] + CELL_W / 2;
-          // Mostra label apenas para horas cheias
-          const showLabel = t.endsWith(':00');
+          // Mostra label apenas para horas cheias (de N em N quando apertado)
+          const hour = Number(t.split(':')[0]);
+          const showLabel = t.endsWith(':00') && (hour - firstHour) % hourLabelStep === 0;
           return showLabel ? (
             <text
               key={t}
@@ -161,10 +179,10 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
               y={BASE_LABEL_H - 8}
               textAnchor="middle"
               fontSize={9}
-              fill="#4a4a6a"
+              fill={colors.subtle}
               fontFamily="Space Mono"
             >
-              {t}
+              {hour}h
             </text>
           ) : null;
         })}
@@ -200,16 +218,17 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
                 y={y + CELL_H / 2 + 4}
                 textAnchor="end"
                 fontSize={11}
-                fill="#c0c0d0"
+                fill={colors.text}
                 fontFamily="DM Sans"
               >
-                {ride.length > 18 ? ride.slice(0, 17) + '…' : ride}
+                {ride.length > maxNameChars ? ride.slice(0, maxNameChars - 1) + '…' : ride}
+                <title>{ride}</title>
               </text>
 
               {/* Células */}
               {times.map((t, ti) => {
                 const val  = matrix[ride]?.[t] ?? null;
-                const fill = val !== null ? waitTimeColor(val) : '#1e1e2e';
+                const fill = val !== null ? waitTimeColor(val) : colors.border;
                 const opacity = val !== null ? 1 : 0.4;
                 const cx = LABEL_W + columns.x[ti];
 
@@ -220,14 +239,14 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
                       y={y}
                       width={CELL_W}
                       height={CELL_H}
-                      rx={4}
-                      ry={4}
+                      rx={cellRadius}
+                      ry={cellRadius}
                       fill={fill}
                       opacity={opacity}
                     >
                       <title>{`${ride} — ${t}: ${val !== null ? `${Math.round(val)} min` : 'Fechado'}`}</title>
                     </rect>
-                    {val !== null && CELL_H >= 28 && (
+                    {val !== null && showNumbers && (
                       <text
                         x={cx + CELL_W / 2}
                         y={y + CELL_H / 2 + 4}
@@ -253,7 +272,7 @@ export function HeatmapGrid({ parkId, date, interval }: Props) {
           if (ti === 0 || !t.endsWith(':00')) return null;
           const x = LABEL_W + columns.x[ti] - GAP;
           return (
-            <line key={`divider-${t}`} x1={x} y1={LABEL_H} x2={x} y2={svgH} stroke="#ffffff" strokeOpacity={0.4} strokeWidth={1} />
+            <line key={`divider-${t}`} x1={x} y1={LABEL_H} x2={x} y2={svgH} stroke={colors.text} strokeOpacity={0.4} strokeWidth={1} />
           );
         })}
       </svg>

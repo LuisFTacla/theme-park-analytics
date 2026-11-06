@@ -1,11 +1,23 @@
-/** Mapeia wait_time para uma cor da escala RdYlGn invertida */
+/**
+ * Faixas de lotação — fonte única de cor, rótulo e legenda. A escala é a mesma
+ * nos dois temas (o texto sobre as células é sempre preto).
+ */
+export const WAIT_TIME_BANDS = [
+  { label: 'Vazio',       range: '<20 min',   upTo: 20,       color: '#34D399' },
+  { label: 'Tranquilo',   range: '20–34 min', upTo: 35,       color: '#A3D94A' },
+  { label: 'Médio',       range: '35–49 min', upTo: 50,       color: '#FFD21F' },
+  { label: 'Movimentado', range: '50–64 min', upTo: 65,       color: '#F7931E' },
+  { label: 'Lotado',      range: '65+ min',   upTo: Infinity, color: '#E63946' },
+] as const;
+
+function waitTimeBand(minutes: number) {
+  return WAIT_TIME_BANDS.find(band => minutes < band.upTo) ?? WAIT_TIME_BANDS[WAIT_TIME_BANDS.length - 1];
+}
+
+/** Mapeia wait_time para a cor da faixa de lotação */
 export function waitTimeColor(minutes: number): string {
-  if (minutes <= 0)  return 'transparent';
-  if (minutes < 20)  return '#4ade80'; // verde vivo
-  if (minutes < 35)  return '#a3e635'; // verde-limão
-  if (minutes < 50)  return '#facc15'; // amarelo
-  if (minutes < 65)  return '#fb923c'; // laranja
-  return '#ef4444';                    // vermelho
+  if (minutes <= 0) return 'transparent';
+  return waitTimeBand(minutes).color;
 }
 
 /**
@@ -28,11 +40,7 @@ export function waitTimeRadius(minutes: number): number {
 
 /** Label descritivo do tempo de fila */
 export function waitTimeLabel(minutes: number): string {
-  if (minutes < 20) return 'Vazio';
-  if (minutes < 35) return 'Tranquilo';
-  if (minutes < 50) return 'Médio';
-  if (minutes < 65) return 'Movimentado';
-  return 'Lotado';
+  return waitTimeBand(minutes).label;
 }
 
 /** Formata uma data para exibição em PT-BR */

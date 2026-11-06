@@ -6,12 +6,16 @@ import {
 import { EmptyState } from '@/components/ui';
 import { waitTimeColor } from '@/utils';
 import type { RideHistoricalProfilePoint } from '@/types';
+import { useTheme } from '@/hooks/useTheme';
+import { chartTheme } from '@/config/chartTheme';
 
 interface Props {
   historicalProfile: RideHistoricalProfilePoint[] | null;
 }
 
 export function RideHourlyChart({ historicalProfile }: Props) {
+  const { colors } = useTheme();
+  const chart = chartTheme(colors);
   const hourlyAverages = useMemo(() => {
     if (!historicalProfile?.length) return [];
 
@@ -36,14 +40,14 @@ export function RideHourlyChart({ historicalProfile }: Props) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={hourlyAverages} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#1e1e2e" vertical={false} />
-        <XAxis dataKey="label" tick={{ fill: '#4a4a6a', fontSize: 11, fontFamily: 'Space Mono' }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fill: '#4a4a6a', fontSize: 11, fontFamily: 'Space Mono' }} axisLine={false} tickLine={false} tickFormatter={v => `${v}m`} />
+        <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} vertical={false} />
+        <XAxis dataKey="label" tick={chart.tick} axisLine={false} tickLine={false} />
+        <YAxis tick={chart.tick} axisLine={false} tickLine={false} tickFormatter={v => `${v}m`} />
         <Tooltip
-          cursor={{ fill: '#ffffff', fillOpacity: 0.04 }}
-          contentStyle={{ background: '#111118', border: '1px solid #1e1e2e', borderRadius: 12, fontFamily: 'DM Sans', color: '#fff' }}
-          labelStyle={{ color: '#4a4a6a', fontSize: 12 }}
-          itemStyle={{ color: '#fff' }}
+          cursor={{ fill: colors.text, fillOpacity: 0.04 }}
+          contentStyle={chart.tooltip}
+          labelStyle={chart.tooltipLabel}
+          itemStyle={{ color: colors.text }}
           formatter={(v: number) => [`${Math.round(v)} min`, 'Média histórica']}
           labelFormatter={(label) => `Horário: ${label}`}
         />

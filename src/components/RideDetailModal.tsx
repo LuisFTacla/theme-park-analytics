@@ -15,6 +15,8 @@ import { RideHeatmapHistory } from '@/components/RideHeatmapHistory';
 import { RideHourlyChart } from '@/components/RideHourlyChart';
 import { waitTimeGradientDefs } from '@/components/waitTimeGradientDefs';
 import { X, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { useTheme } from '@/hooks/useTheme';
+import { chartTheme } from '@/config/chartTheme';
 
 interface Props {
   parkId: number;
@@ -31,7 +33,8 @@ const DETAIL_INTERVAL = 15;
 function TrendDisplay({ trend }: { trend: Trend | null }) {
   if (!trend) return <span className="text-brand-muted text-sm font-mono">Dado insuficiente</span>;
   const Icon = trend.direction === 'up' ? TrendingUp : trend.direction === 'down' ? TrendingDown : Minus;
-  const color = trend.direction === 'up' ? '#ef4444' : trend.direction === 'down' ? '#4ade80' : '#94a3b8';
+  const { colors } = useTheme();
+  const color = trend.direction === 'up' ? colors.danger : trend.direction === 'down' ? colors.ok : colors.muted;
   const sign = trend.deltaMinutes > 0 ? '+' : '';
   return (
     <span className="flex items-center gap-2 font-mono text-sm" style={{ color }}>
@@ -43,14 +46,16 @@ function TrendDisplay({ trend }: { trend: Trend | null }) {
 
 function FactCard({ label, value }: { label: string; value: number | null | undefined }) {
   return (
-    <div className="bg-brand-dark/40 border border-brand-border rounded-xl p-3">
+    <div className="bg-brand-bg/40 border border-brand-border rounded-xl p-3">
       <div className="text-[10px] text-brand-muted uppercase tracking-wider mb-1">{label}</div>
-      <div className="font-mono text-2xl text-white">{value != null ? `${Math.round(value)} min` : '—'}</div>
+      <div className="font-mono text-2xl text-brand-text">{value != null ? `${Math.round(value)} min` : '—'}</div>
     </div>
   );
 }
 
 export function RideDetailModal({ parkId, date, rideName, onClose }: Props) {
+  const { colors } = useTheme();
+  const chart = chartTheme(colors);
   const uid = useId().replace(/:/g, '');
 
   useEffect(() => {
@@ -125,10 +130,10 @@ export function RideDetailModal({ parkId, date, rideName, onClose }: Props) {
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-5 border-b border-brand-border sticky top-0 bg-brand-card rounded-t-2xl">
-          <h2 className="font-display text-lg font-bold text-white truncate pr-4">{rideName}</h2>
+          <h2 className="font-display text-lg font-bold text-brand-text truncate pr-4">{rideName}</h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-brand-muted hover:text-white hover:bg-brand-border transition-all shrink-0"
+            className="p-2 rounded-lg text-brand-muted hover:text-brand-text hover:bg-brand-border transition-all shrink-0"
           >
             <X size={18} />
           </button>
@@ -145,7 +150,7 @@ export function RideDetailModal({ parkId, date, rideName, onClose }: Props) {
                 <span className="w-3 h-1.5 rounded-sm inline-block" style={{ background: waitTimeGradientCss() }} /> Hoje
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-0.5 border-t border-dashed border-brand-muted inline-block" /> Média histórica
+                <span className="w-3 h-0.5 border-t border-dashed border-brand-secondary inline-block" /> Média histórica
               </span>
             </div>
             {loadingDay ? (
@@ -158,25 +163,25 @@ export function RideDetailModal({ parkId, date, rideName, onClose }: Props) {
               <ResponsiveContainer width="100%" height={220}>
                 <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                   {waitTimeGradientDefs({ id: uid, min: diaRange.min, max: diaRange.max })}
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e1e2e" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} vertical={false} />
                   <XAxis
                     dataKey="label"
                     ticks={ticks}
-                    tick={{ fill: '#4a4a6a', fontSize: 11, fontFamily: 'Space Mono' }}
+                    tick={chart.tick}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
                     domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.15)]}
-                    tick={{ fill: '#4a4a6a', fontSize: 11, fontFamily: 'Space Mono' }}
+                    tick={chart.tick}
                     axisLine={false}
                     tickLine={false}
                     tickFormatter={(v) => `${v}m`}
                   />
                   <Tooltip
-                    contentStyle={{ background: '#111118', border: '1px solid #1e1e2e', borderRadius: 12, fontFamily: 'DM Sans', color: '#fff' }}
+                    contentStyle={chart.tooltip}
                     formatter={(v: number, name: string) => [`${Math.round(v)} min`, name === 'dia' ? 'Hoje' : 'Média histórica']}
-                    labelStyle={{ color: '#4a4a6a', fontSize: 12 }}
+                    labelStyle={chart.tooltipLabel}
                   />
                   <Area
                     type="monotone"
@@ -186,9 +191,9 @@ export function RideDetailModal({ parkId, date, rideName, onClose }: Props) {
                     fill={`url(#${uid}-fill)`}
                     fillOpacity={1}
                     dot={false}
-                    activeDot={{ r: 5, fill: '#ef233c', stroke: '#0a0a0f', strokeWidth: 2 }}
+                    activeDot={{ r: 5, fill: colors.primary, stroke: colors.card, strokeWidth: 2 }}
                   />
-                  <Line type="monotone" dataKey="historico" stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
+                  <Line type="monotone" dataKey="historico" stroke={colors.secondary} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls />
                 </ComposedChart>
               </ResponsiveContainer>
             )}
@@ -211,7 +216,7 @@ export function RideDetailModal({ parkId, date, rideName, onClose }: Props) {
                   <FactCard label="Média do dia" value={stats?.dailyAvg} />
                   <FactCard label="Máxima do dia" value={stats?.dailyMax} />
                 </div>
-                <div className="mt-3 flex items-center justify-between bg-brand-dark/40 border border-brand-border rounded-xl p-3">
+                <div className="mt-3 flex items-center justify-between bg-brand-bg/40 border border-brand-border rounded-xl p-3">
                   <span className="text-[10px] text-brand-muted uppercase tracking-wider">Tendência agora</span>
                   <TrendDisplay trend={trend} />
                 </div>

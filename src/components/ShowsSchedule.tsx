@@ -53,20 +53,24 @@ export function ShowsSchedule({ parkId, date }: Props) {
       </h2>
       <div className="bg-brand-card border border-brand-border rounded-2xl p-5 space-y-2">
         {grouped.map(g => (
+          // Coluna do nome com largura fixa (cabe o nome mais longo) pra os
+          // horários de todas as linhas começarem no mesmo ponto; no celular
+          // o nome vai pra cima dos horários.
           <div
             key={g.nome}
-            className="flex items-center gap-3 flex-wrap bg-brand-dark/40 border border-brand-border rounded-xl px-4 py-2.5"
+            className="grid gap-2 sm:grid-cols-[16rem_1fr] sm:items-center bg-brand-bg/40 border border-brand-border rounded-xl px-4 py-2.5"
           >
-            <span className="font-body text-sm text-white font-medium min-w-[180px]">
+            <span className="font-body text-sm text-brand-text font-medium">
               {g.nome}
             </span>
             <div className="flex gap-2 flex-wrap">
               {g.sessions.map((s, i) => (
                 <span
                   key={i}
-                  className="font-mono text-xs text-brand-red bg-brand-red/10 px-2 py-1 rounded-md whitespace-nowrap"
+                  title={`${formatShowTime(s.periodo_de)}–${formatShowTime(s.periodo_ate)}`}
+                  className="w-14 text-center font-mono text-xs tabular-nums text-brand-primary bg-brand-primary/10 py-1 rounded-md"
                 >
-                  {formatShowTime(s.periodo_de)}–{formatShowTime(s.periodo_ate)}
+                  {formatShowTime(s.periodo_de)}
                 </span>
               ))}
             </div>

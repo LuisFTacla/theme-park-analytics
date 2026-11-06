@@ -1,12 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@/hooks/useQuery';
 import { api } from '@/services/api';
-import { Spinner, ErrorMessage } from '@/components/ui';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { PARK_GROUPS } from '@/config/parkGroups';
 import { ParkGroupCard } from '@/components/ParkGroupCard';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { ParkSearchList } from '@/components/ParkSearchList';
 import type { Park } from '@/types';
 
 // ── Dropdown via Portal (evita ser cortado por overflow/z-index de ancestrais) ──
@@ -25,7 +26,6 @@ function ParkDropdown({
   onSelect: (park: Park) => void;
   onClose: () => void;
 }) {
-  const [search, setSearch] = useState('');
   const panelRef = useRef<HTMLDivElement>(null);
   const [rect, setRect] = useState<DOMRect | null>(null);
 
@@ -50,10 +50,6 @@ function ParkDropdown({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [onClose, anchorRef]);
 
-  const filtered = parks.filter(p =>
-    p.park_name.toLowerCase().includes(search.toLowerCase())
-  );
-
   if (!rect) return null;
 
   return createPortal(
@@ -68,52 +64,13 @@ function ParkDropdown({
       }}
       className="bg-brand-card border border-brand-border rounded-xl shadow-2xl shadow-black/60 overflow-hidden"
     >
-      <div className="p-2 border-b border-brand-border">
-        <input
-          autoFocus
-          type="text"
-          placeholder="Buscar parque..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="
-            w-full px-3 py-2 rounded-lg bg-brand-dark border border-brand-border
-            text-white placeholder-brand-muted font-body text-sm
-            focus:outline-none focus:border-brand-red/60
-            transition-all
-          "
-        />
-      </div>
-
-      <ul className="max-h-64 overflow-y-auto">
-        {loading && (
-          <li className="flex justify-center py-6"><Spinner size={20} /></li>
-        )}
-        {error && (
-          <li className="px-4 py-3"><ErrorMessage message={error} /></li>
-        )}
-        {!loading && filtered.length === 0 && (
-          <li className="px-4 py-6 text-center text-brand-muted text-sm">
-            Nenhum parque encontrado para "{search}".
-          </li>
-        )}
-        {!loading && filtered.map(park => (
-          <li key={park.park_id}>
-            <button
-              onClick={() => onSelect(park)}
-              className="
-                w-full text-left px-5 py-3 text-sm font-body
-                text-white/80 hover:text-white hover:bg-brand-red/10
-                transition-all flex items-center justify-between group
-              "
-            >
-              <span>{park.park_name}</span>
-              <span className="text-brand-red text-xs opacity-0 group-hover:opacity-100 transition-opacity font-display tracking-widest">
-                VER →
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      <ParkSearchList
+        parks={parks}
+        loading={loading}
+        error={error}
+        onSelect={onSelect}
+        listClassName="max-h-64"
+      />
     </div>,
     document.body
   );
@@ -137,32 +94,35 @@ export function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-brand-dark text-white font-body">
+    <div className="min-h-screen bg-brand-bg text-brand-text font-body">
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(239,35,60,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(239,35,60,0.03) 1px, transparent 1px)
+            linear-gradient(rgb(var(--c-primary) / 0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgb(var(--c-primary) / 0.04) 1px, transparent 1px)
           `,
           backgroundSize: '48px 48px',
         }}
       />
 
       <div className="relative z-10 max-w-3xl mx-auto px-4 pt-20 pb-16">
+        <div className="absolute top-6 right-4">
+          <ThemeToggle />
+        </div>
 
         {/* ── Header ── */}
         <div className="mb-14 animate-fade-up" style={{ animationDelay: '0s', opacity: 0 }}>
-          <p className="font-display text-xs tracking-[0.3em] text-brand-red uppercase mb-4">
-            Theme Park Analytics
-          </p>
-          <h1 className="font-display text-5xl md:text-6xl font-bold leading-tight mb-4">
-            Inteligência<br />
-            <span className="text-brand-red">de Filas</span>
+          <h1 className="flex items-center gap-3 md:gap-4 font-display text-5xl md:text-6xl font-bold leading-tight mb-3">
+            <img src="/parkometrics-marca.svg" alt="" className="h-12 md:h-14 w-auto" />
+            <span>Parko<span className="text-brand-primary">metrics</span></span>
           </h1>
+          <p className="font-display text-lg md:text-xl text-brand-text/80 mb-4">
+            Buscando padrões na diversão
+          </p>
           <p className="text-brand-muted text-lg max-w-md leading-relaxed">
-            Histórico real de tempos de espera, calendários de lotação e status ao vivo
-            de parques temáticos ao redor do mundo.
+            Toda fila conta uma história. Histórico de espera, calendários
+            de lotação e status ao vivo de parques temáticos do mundo todo.
           </p>
         </div>
 
@@ -181,7 +141,7 @@ export function Home() {
 
           <button
             onClick={() => setShowAllGroups(prev => !prev)}
-            className="flex items-center gap-1.5 mt-4 font-display text-xs tracking-widest text-brand-muted hover:text-white uppercase transition-all"
+            className="flex items-center gap-1.5 mt-4 font-display text-xs tracking-widest text-brand-muted hover:text-brand-text uppercase transition-all"
           >
             {showAllGroups ? 'Recolher' : 'Ver outros parques e resorts'}
             {showAllGroups ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -204,8 +164,8 @@ export function Home() {
             className="
               w-full flex items-center justify-between
               px-5 py-4 rounded-xl bg-brand-card border border-brand-border
-              text-white font-body text-sm
-              hover:border-brand-muted/40 focus:outline-none focus:border-brand-red/60 focus:ring-1 focus:ring-brand-red/30
+              text-brand-text font-body text-sm
+              hover:border-brand-muted/40 focus:outline-none focus:border-brand-primary/60 focus:ring-1 focus:ring-brand-primary/30
               transition-all
             "
           >
@@ -243,26 +203,26 @@ export function Home() {
 
           {/* 1. Introdução */}
           <section className="space-y-3">
-            <h2 className="font-display text-xs tracking-[0.2em] text-brand-red uppercase">
+            <h2 className="font-display text-xs tracking-[0.2em] text-brand-primary uppercase">
               01 — Introdução e Contexto Histórico
             </h2>
             <p className="text-brand-muted text-sm leading-relaxed">
               Este projeto nasceu em 2023 da necessidade de entender o comportamento das filas e a
-              lotação do <span className="text-white">Beto Carrero World (BCW)</span>. Inicialmente,
+              lotação do <span className="text-brand-text">Beto Carrero World (BCW)</span>. Inicialmente,
               a abordagem era manual e reativa: os dados eram extraídos do site <em>Thrill-Data</em> por
               meio de downloads mensais e individuais por atração, analisados em notebooks Jupyter com
               relatórios estáticos e sem interatividade.
             </p>
             <p className="text-brand-muted text-sm leading-relaxed">
               Em meados de 2025, o projeto foi completamente reestruturado para um{' '}
-              <span className="text-white">pipeline de dados automatizado, escalável e dinâmico</span>,
+              <span className="text-brand-text">pipeline de dados automatizado, escalável e dinâmico</span>,
               utilizando infraestrutura em nuvem e ferramentas modernas de Data Engineering. Em 2026,
-              evoluiu para uma <span className="text-white">aplicação web completa</span> com
+              evoluiu para uma <span className="text-brand-text">aplicação web completa</span> com
               separação de responsabilidades entre front-end e back-end.
             </p>
             <p className="text-brand-muted text-sm leading-relaxed">
               Ao longo de 2026, o escopo deixou de ser exclusivo do BCW: a plataforma passou a
-              acompanhar <span className="text-white">outros parques e resorts ao redor do mundo</span>{' '}
+              acompanhar <span className="text-brand-text">outros parques e resorts ao redor do mundo</span>{' '}
               (Disney, Universal, Six Flags, entre outros), com uma home que combina a fila de vários
               parques do mesmo grupo em um único cartão, e um nível de detalhe por atração — histórico,
               tendência e comparação com a média — que antes só existia para o parque piloto.
@@ -271,7 +231,7 @@ export function Home() {
 
           {/* 2. Arquitetura */}
           <section className="space-y-4">
-            <h2 className="font-display text-xs tracking-[0.2em] text-brand-red uppercase">
+            <h2 className="font-display text-xs tracking-[0.2em] text-brand-primary uppercase">
               02 — Arquitetura Técnica e Pipeline
             </h2>
             <ul className="space-y-3">
@@ -283,9 +243,9 @@ export function Home() {
                 { label: 'Front-end', desc: 'Aplicação React com TypeScript, roteamento client-side, componentes reutilizáveis e design system próprio — substituindo o Streamlit monolítico.' },
               ].map(item => (
                 <li key={item.label} className="flex gap-3 text-sm">
-                  <span className="text-brand-red font-mono shrink-0 mt-0.5">→</span>
+                  <span className="text-brand-primary font-mono shrink-0 mt-0.5">→</span>
                   <span>
-                    <span className="text-white font-medium">{item.label}:</span>{' '}
+                    <span className="text-brand-text font-medium">{item.label}:</span>{' '}
                     <span className="text-brand-muted">{item.desc}</span>
                   </span>
                 </li>
@@ -295,7 +255,7 @@ export function Home() {
 
           {/* 3. Funcionalidades */}
           <section className="space-y-4">
-            <h2 className="font-display text-xs tracking-[0.2em] text-brand-red uppercase">
+            <h2 className="font-display text-xs tracking-[0.2em] text-brand-primary uppercase">
               03 — Funcionalidades
             </h2>
             <div className="overflow-x-auto rounded-xl border border-brand-border">
@@ -335,8 +295,8 @@ export function Home() {
                       logic: 'Agrega as séries de cada parque do grupo por bloco de tempo, respeitando o fuso horário local.',
                     },
                   ].map(row => (
-                    <tr key={row.name} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="px-4 py-3 text-white">{row.name}</td>
+                    <tr key={row.name} className="hover:bg-brand-text/[0.03] transition-colors">
+                      <td className="px-4 py-3 text-brand-text">{row.name}</td>
                       <td className="px-4 py-3 text-brand-muted">{row.desc}</td>
                       <td className="px-4 py-3 text-brand-muted">{row.logic}</td>
                     </tr>
@@ -348,7 +308,7 @@ export function Home() {
 
           {/* 4. Qualidade BCW */}
           <section className="space-y-3">
-            <h2 className="font-display text-xs tracking-[0.2em] text-brand-red uppercase">
+            <h2 className="font-display text-xs tracking-[0.2em] text-brand-primary uppercase">
               04 — Tratamentos de Qualidade (BCW)
             </h2>
             <ul className="space-y-2">
@@ -360,7 +320,7 @@ export function Home() {
                 'Horário de operação: funcionamento (10h–19h) aplicado em "Hoje no Parque", ignorando filas de painéis de atração esquecidos ligados fora do expediente.',
               ].map(item => (
                 <li key={item} className="flex gap-3 text-sm">
-                  <span className="text-brand-red font-mono shrink-0 mt-0.5">→</span>
+                  <span className="text-brand-primary font-mono shrink-0 mt-0.5">→</span>
                   <span className="text-brand-muted">{item}</span>
                 </li>
               ))}
@@ -369,7 +329,7 @@ export function Home() {
 
           {/* 5. Próximos Passos */}
           <section className="space-y-3">
-            <h2 className="font-display text-xs tracking-[0.2em] text-brand-red uppercase">
+            <h2 className="font-display text-xs tracking-[0.2em] text-brand-primary uppercase">
               05 — Próximos Passos
             </h2>
             <ul className="space-y-2">
@@ -380,7 +340,7 @@ export function Home() {
                 'PWA com notificações push para alertas de pico em tempo real.',
               ].map(item => (
                 <li key={item} className="flex gap-3 text-sm">
-                  <span className="text-brand-red font-mono shrink-0 mt-0.5">→</span>
+                  <span className="text-brand-primary font-mono shrink-0 mt-0.5">→</span>
                   <span className="text-brand-muted">{item}</span>
                 </li>
               ))}
@@ -393,7 +353,7 @@ export function Home() {
               onClick={() => setChangelogOpen(!changelogOpen)}
               className="w-full flex items-center justify-between group"
             >
-              <h2 className="font-display text-xs tracking-[0.2em] text-brand-red uppercase">
+              <h2 className="font-display text-xs tracking-[0.2em] text-brand-primary uppercase">
                 06 — Histórico de Versões
               </h2>
               {changelogOpen
@@ -406,7 +366,22 @@ export function Home() {
               <div className="space-y-8 pt-2">
                 {[
                   {
-                    version: 'v4.0', label: 'Atual',
+                    version: 'v5.0', label: 'Atual',
+                    items: [
+                      '🎡 Nova Identidade — Parkometrics: o site ganhou nome, marca, ícones e uma paleta de cores inspirada no uniforme do Beto Carrero.',
+                      '🌗 Modo Claro e Escuro: alterne o tema pelo botão no topo; o site segue a preferência do seu sistema e lembra a sua escolha.',
+                      '🍔 Menu na Página do Parque: troque de parque com busca, volte ao início e mude o tema sem sair da página.',
+                      '🔗 Links Compartilháveis: aba, data e intervalo ficam no endereço da página — dá pra mandar o link de um dia específico e usar o botão voltar do navegador.',
+                      '📐 Heatmap que Cabe na Tela: o dia inteiro aparece sem rolagem lateral, até em intervalos de 5 minutos; os números somem quando as células ficam estreitas e a cor continua contando a história.',
+                      '🎪 Calendário de Shows: o calendário alterna entre tempo de fila e número de sessões de shows por dia, cada um com sua legenda.',
+                      '🎨 Faixas de Lotação: cores padronizadas em cinco níveis (Vazio, Tranquilo, Médio, Movimentado e Lotado) em todo o site.',
+                      '🕘 Horários de Shows Mais Limpos: a grade mostra só o início de cada sessão, com os horários alinhados.',
+                      '⚡ Mais Rápido: médias históricas, detalhe das atrações e calendário passaram a ler dados pré-calculados, e as respostas ficam em cache — menos espera, principalmente quando o servidor está acordando.',
+                      '🔋 Ao Vivo Econômico: a atualização automática pausa quando a aba está em segundo plano e retoma assim que você volta.',
+                    ],
+                  },
+                  {
+                    version: 'v4.0', label: null,
                     items: [
                       '🎭 Horários de Shows: nova fonte de dados oficial do parque — grade de shows do dia abaixo da evolução geral, destaque das sessões no heatmap (uma cor por show) e marcadores animados no mapa (prestes a começar, em exibição, saída do público).',
                       '🚗 Turbo Drive rastreado: coleta de filas do BCW passou a usar a API oficial do parque como fonte principal (Queue-Times vira reserva), cobrindo atrações que a fonte antiga não via.',
@@ -476,9 +451,9 @@ export function Home() {
                 ].map(({ version, label, items }) => (
                   <div key={version}>
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="font-mono text-white font-bold">{version}</span>
+                      <span className="font-mono text-brand-text font-bold">{version}</span>
                       {label && (
-                        <span className="font-display text-[10px] tracking-widest text-brand-red bg-brand-red/10 border border-brand-red/20 px-2 py-0.5 rounded-md uppercase">
+                        <span className="font-display text-[10px] tracking-widest text-brand-primary bg-brand-primary/10 border border-brand-primary/20 px-2 py-0.5 rounded-md uppercase">
                           {label}
                         </span>
                       )}
@@ -502,12 +477,12 @@ export function Home() {
         <footer className="mt-20 pt-8 border-t border-brand-border animate-fade-up" style={{ animationDelay: '0.4s', opacity: 0 }}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-brand-muted text-xs font-mono">
             <div>
-              <p className="text-white/60 mb-1">Luis Fernando Melnek Tacla</p>
+              <p className="text-brand-text/60 mb-1">Luis Fernando Melnek Tacla</p>
               <div className="flex gap-4">
                 <a href="https://www.linkedin.com/in/luis-fernando-melnek-tacla/" target="_blank" rel="noreferrer"
-                  className="hover:text-brand-red transition-colors">LinkedIn</a>
+                  className="hover:text-brand-primary transition-colors">LinkedIn</a>
                 <a href="https://github.com/LuisFTacla" target="_blank" rel="noreferrer"
-                  className="hover:text-brand-red transition-colors">GitHub</a>
+                  className="hover:text-brand-primary transition-colors">GitHub</a>
               </div>
             </div>
             <div className="text-right">

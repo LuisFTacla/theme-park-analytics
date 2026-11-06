@@ -1,4 +1,4 @@
-import { clamp } from '@/utils';
+import { clamp, WAIT_TIME_BANDS } from '@/utils';
 
 type RGB = [number, number, number];
 
@@ -18,13 +18,14 @@ function lerpRgb(a: RGB, b: RGB, t: number): RGB {
 
 // Mesmos checkpoints de cor usados em `waitTimeColor` (calendário/heatmap) —
 // aqui interpolados continuamente em vez de bandas com corte abrupto.
+const [VAZIO, TRANQUILO, MEDIO, MOVIMENTADO, LOTADO] = WAIT_TIME_BANDS.map(b => hexToRgb(b.color));
 const CHECKPOINTS: [number, RGB][] = [
-  [0, hexToRgb('#4ade80')],
-  [20, hexToRgb('#4ade80')],
-  [35, hexToRgb('#a3e635')],
-  [50, hexToRgb('#facc15')],
-  [65, hexToRgb('#fb923c')],
-  [90, hexToRgb('#ef4444')],
+  [0, VAZIO],
+  [20, VAZIO],
+  [35, TRANQUILO],
+  [50, MEDIO],
+  [65, MOVIMENTADO],
+  [90, LOTADO],
 ];
 
 const MAX_CHECKPOINT = CHECKPOINTS[CHECKPOINTS.length - 1][0];

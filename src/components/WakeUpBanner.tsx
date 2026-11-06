@@ -11,8 +11,8 @@ export function WakeUpBanner() {
       <div
         className="
           pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl
-          bg-brand-card border border-brand-red/30 shadow-2xl shadow-black/60
-          text-sm font-body text-white/90
+          bg-brand-card border border-brand-primary/30 shadow-2xl shadow-black/60
+          text-sm font-body text-brand-text/90
         "
       >
         <Spinner size={16} />

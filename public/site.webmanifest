@@ -1,0 +1,22 @@
+{
+  "name": "Parkometrics",
+  "short_name": "Parkometrics",
+  "description": "Buscando padrões na diversão",
+  "icons": [
+    {
+      "src": "/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "theme_color": "#0D0B1A",
+  "background_color": "#0D0B1A",
+  "display": "standalone"
+}

@@ -30,13 +30,39 @@ export function subscribeWaking(listener: WakingListener): () => void {
   return () => wakingListeners.delete(listener);
 }
 
-async function get<T>(path: string): Promise<T> {
+// ─── Cache em memória das respostas ───────────────────────────────────────────
+// Vários componentes pedem os mesmos dados (heatmap, shows, evolução) e a Home
+// pede a evolução de cada parque — sem isso cada navegação repete tudo e
+// estoura o rate limit da API (60 req/min por IP). Guardar a *promise* também
+// junta requisições simultâneas idênticas numa só (ex: StrictMode em dev).
+// Dado ao vivo expira antes do polling (60s), pra ele sempre buscar dado novo;
+// o resto acompanha o cache mais curto do servidor (2 min, dados do dia).
+const LIVE_CACHE_TTL_MS = 30_000;
+const CACHE_TTL_MS = 120_000;
+const responseCache = new Map<string, { promise: Promise<unknown>; expiresAt: number }>();
+
+function get<T>(path: string): Promise<T> {
+  const cached = responseCache.get(path);
+  if (cached && cached.expiresAt > Date.now()) return cached.promise as Promise<T>;
+
+  const promise = fetchJson<T>(path);
+  const ttl = path.endsWith('/live') ? LIVE_CACHE_TTL_MS : CACHE_TTL_MS;
+  responseCache.set(path, { promise, expiresAt: Date.now() + ttl });
+  // Erro não fica em cache: a próxima tentativa vai de novo à API
+  promise.catch(() => responseCache.delete(path));
+  return promise;
+}
+
+async function fetchJson<T>(path: string): Promise<T> {
   pendingRequests++;
   if (!wakeTimer) {
     wakeTimer = setTimeout(() => setWaking(true), WAKE_THRESHOLD_MS);
   }
   try {
     const res = await fetch(`${BASE_URL}${path}`);
+    if (res.status === 429) {
+      throw new Error('Muitas consultas em pouco tempo. Aguarde um minuto e tente de novo.');
+    }
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.message ?? `HTTP ${res.status}`);

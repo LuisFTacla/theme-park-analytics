@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="78 92 372 334" width="372" height="334">
+  <!-- Cores: edite apenas estes valores -->
+  <style>
+    .pm-bg    { fill: #16132A; stroke: #2A2445; }
+    .pm-bars  { fill: #3D3760; }
+    .pm-curve { stroke: #E0368F; }
+  </style>
+  <g class="pm-bars">
+    <rect x="102" y="290" width="48" height="122" rx="14"/>
+    <rect x="172" y="200" width="48" height="212" rx="14"/>
+    <rect x="242" y="140" width="48" height="272" rx="14"/>
+    <rect x="312" y="262" width="48" height="150" rx="14"/>
+    <rect x="382" y="214" width="48" height="198" rx="14"/>
+  </g>
+  <path class="pm-curve" d="M96 262 C150 250 196 172 236 132 C268 100 300 112 318 160 C334 204 342 232 362 224 C384 216 398 192 432 178" fill="none" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

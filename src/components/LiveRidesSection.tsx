@@ -143,19 +143,19 @@ export function LiveRidesSection({ parkId, date, isToday }: Props) {
       {/* ─── Linha de Status Geral Macro ─── */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-brand-border/40 pb-4">
         <div className="flex gap-3">
-          <span className="flex items-center gap-2 font-display text-xs font-bold tracking-wider text-green-400 bg-green-500/10 px-3 py-1 rounded-lg border border-green-500/20">
-            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+          <span className="flex items-center gap-2 font-display text-xs font-bold tracking-wider text-status-ok bg-status-ok/10 px-3 py-1 rounded-lg border border-status-ok/20">
+            <span className="w-2 h-2 rounded-full bg-status-ok animate-pulse" />
             {metrics.operating} {isToday ? "Abertas" : "Operaram"}
           </span>
-          <span className="flex items-center gap-2 font-display text-xs font-bold tracking-wider text-brand-red bg-brand-red/10 px-3 py-1 rounded-lg border border-brand-red/20">
-            <span className="w-2 h-2 rounded-full bg-brand-red" />
+          <span className="flex items-center gap-2 font-display text-xs font-bold tracking-wider text-brand-primary bg-brand-primary/10 px-3 py-1 rounded-lg border border-brand-primary/20">
+            <span className="w-2 h-2 rounded-full bg-brand-highlight" />
             {metrics.notOperating} {isToday ? "Fechadas" : "Sem registro"}
           </span>
         </div>
 
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-1.5 font-display text-xs tracking-widest text-brand-muted hover:text-white uppercase transition-all duration-300 ease-in-out group"
+          className="flex items-center gap-1.5 font-display text-xs tracking-widest text-brand-muted hover:text-brand-text uppercase transition-all duration-300 ease-in-out group"
         >
           {isExpanded ? (
             <>
@@ -233,7 +233,7 @@ export function LiveRidesSection({ parkId, date, isToday }: Props) {
                     ease: "easeOut",
                   }}
                 >
-                  <span className="font-display text-sm font-medium text-zinc-300 line-clamp-1">
+                  <span className="font-display text-sm font-medium text-brand-text/90 line-clamp-1">
                     {card.name}
                   </span>
 
@@ -244,9 +244,9 @@ export function LiveRidesSection({ parkId, date, isToday }: Props) {
                   <div className="flex items-baseline justify-between mt-2">
                     {!isClosed ? (
                       <>
-                        <span className="font-mono text-3xl font-bold tracking-tight text-white">
+                        <span className="font-mono text-3xl font-bold tracking-tight text-brand-text">
                           {Math.round(card.value)}
-                          <span className="text-xs font-body text-zinc-400 font-normal ml-1">
+                          <span className="text-xs font-body text-brand-muted font-normal ml-1">
                             min
                           </span>
                         </span>
@@ -259,7 +259,7 @@ export function LiveRidesSection({ parkId, date, isToday }: Props) {
                         </div>
                       </>
                     ) : (
-                      <span className="font-display text-xs tracking-wider text-brand-red font-bold uppercase bg-brand-red/10 px-2 py-0.5 rounded-md border border-brand-red/20">
+                      <span className="font-display text-xs tracking-wider text-brand-primary font-bold uppercase bg-brand-primary/10 px-2 py-0.5 rounded-md border border-brand-primary/20">
                         Fechado
                       </span>
                     )}

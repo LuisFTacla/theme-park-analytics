@@ -9,6 +9,7 @@ import { getRideCoordinate, PARK_CENTER } from '@/config/rideCoordinates';
 import { SHOW_VENUES, PORTAL_DA_ESCURIDAO } from '@/config/showVenues';
 import { Play, Pause } from 'lucide-react';
 import type { HeatmapInterval } from '@/types';
+import { useTheme } from '@/hooks/useTheme';
 
 interface Props {
   parkId: number;
@@ -34,12 +35,12 @@ const PHASE_LABEL: Record<ShowPhase, string> = {
 };
 
 function buildShowIcon(icon: string, color: string | undefined, phase: ShowPhase) {
-  const ringColor = color ?? '#94a3b8';
+  const ringColor = color ?? 'rgb(var(--c-muted))';
   const active = phase === 'ongoing' || phase === 'open';
   const upcoming = phase === 'upcoming';
   const faded = phase === 'dispersing' || phase === 'closed';
 
-  // Fundo sempre escuro e sólido (mesma cor do card do app) -- contra a foto
+  // Fundo sólido na mesma cor do card do app -- contra a foto
   // de satélite, um fundo semitransparente sumia de vista. A cor do show fica
   // só na borda/brilho, que já diferencia os 3 estados.
   const border = upcoming ? `border: 2.5px dashed ${ringColor};` : `border: 2.5px solid ${ringColor};`;
@@ -48,12 +49,13 @@ function buildShowIcon(icon: string, color: string | undefined, phase: ShowPhase
     : `box-shadow: 0 2px 6px rgba(0,0,0,0.7);`;
   const opacity = faded ? 0.8 : 1;
 
-  const html = `<div style="width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#0a0a0fe6;${border}${glow}opacity:${opacity};">${icon}</div>`;
+  const html = `<div style="width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:18px;background:rgb(var(--c-card) / 0.9);${border}${glow}opacity:${opacity};">${icon}</div>`;
 
   return L.divIcon({ html, className: '', iconSize: [36, 36], iconAnchor: [18, 18] });
 }
 
 export function ParkMapAnimation({ parkId, date, interval }: Props) {
+  const { colors } = useTheme();
   const { data, loading, error } = useQuery(
     () => api.getHeatmap(parkId, date, interval),
     [parkId, date, interval]
@@ -150,7 +152,7 @@ export function ParkMapAnimation({ parkId, date, interval }: Props) {
           onClick={() => setPlaying(p => !p)}
           className="
             flex items-center justify-center w-10 h-10 rounded-full
-            bg-brand-red text-white shrink-0
+            bg-brand-button text-white shrink-0
             hover:opacity-90 transition-opacity
           "
           aria-label={playing ? 'Pausar' : 'Reproduzir'}
@@ -167,10 +169,10 @@ export function ParkMapAnimation({ parkId, date, interval }: Props) {
             setPlaying(false);
             setIndex(Number(e.target.value));
           }}
-          className="flex-1 accent-brand-red"
+          className="flex-1 accent-brand-primary"
         />
 
-        <span className="font-mono text-sm text-white w-14 text-right shrink-0">
+        <span className="font-mono text-sm text-brand-text w-14 text-right shrink-0">
           {currentTime}
         </span>
       </div>
@@ -185,8 +187,8 @@ export function ParkMapAnimation({ parkId, date, interval }: Props) {
               onClick={() => setSpeed(s)}
               className={`px-2.5 py-1 rounded-lg text-xs font-mono border transition-all ${
                 speed === s
-                  ? 'bg-brand-red border-brand-red text-white'
-                  : 'bg-brand-card border-brand-border text-brand-muted hover:text-white hover:border-brand-muted'
+                  ? 'bg-brand-button border-brand-button text-white'
+                  : 'bg-brand-card border-brand-border text-brand-muted hover:text-brand-text hover:border-brand-muted'
               }`}
             >
               {s}x
@@ -205,7 +207,7 @@ export function ParkMapAnimation({ parkId, date, interval }: Props) {
           zoom={17}
           maxZoom={19}
           scrollWheelZoom={false}
-          style={{ height: 480, width: '100%', background: '#0a0a0f' }}
+          style={{ height: 480, width: '100%', background: colors.bg }}
         >
           <TileLayer
             attribution="Tiles &copy; Esri"
@@ -227,7 +229,7 @@ export function ParkMapAnimation({ parkId, date, interval }: Props) {
                 pathOptions={{
                   color: '#ffffff',
                   weight: 1,
-                  fillColor: isClosed ? '#4a4a6a' : waitTimeColor(wait),
+                  fillColor: isClosed ? colors.subtle : waitTimeColor(wait),
                   fillOpacity: isClosed ? 0.3 : 0.75,
                 }}
               >

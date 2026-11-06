@@ -35,27 +35,27 @@ export const SHOW_VENUES: Record<string, ShowVenue> = {
   'Hot Wheels Epic Show': {
     coord: { lat: -26.8010922, lng: -48.6204122 },
     icon: '🏎️',
-    color: '#38bdf8', // azul claro
+    color: '#3B6FE0', // azul
   },
   'Madagascar Circus Show': {
     coord: { lat: -26.8020160, lng: -48.6165288 },
     icon: '🦁',
-    color: '#fb923c', // laranja
+    color: '#F7931E', // laranja
   },
   'Excalibur': {
     coord: { lat: -26.8025263, lng: -48.6135030 },
     icon: '⚔️',
-    color: '#22c55e', // verde
+    color: '#22C3CF', // ciano
   },
   'O Sonho do Cowboy': {
     coord: { lat: -26.8013495, lng: -48.6153507 },
     icon: '🤠',
-    color: '#d4af37', // dourado
+    color: '#FFD21F', // amarelo
   },
   'No Ritmo de Trolls': {
     coord: { lat: -26.8010251, lng: -48.6138914 },
     icon: '🧌',
-    color: '#a855f7', // roxo
+    color: '#E0368F', // magenta
     highlightFromHour: 18,
   },
   [PORTAL_DA_ESCURIDAO]: {
@@ -67,11 +67,11 @@ export const SHOW_VENUES: Record<string, ShowVenue> = {
   'Papo de Galinheiro': {
     coord: { lat: -26.8009723, lng: -48.6147192 },
     icon: '🐔',
-    color: '#1e40af', // azul escuro
+    color: '#8B3FD1', // roxo
   },
   'O Dodói da Galinha Pintadinha': {
     coord: { lat: -26.8009723, lng: -48.6147192 },
     icon: '🐔',
-    color: '#1e40af', // azul escuro
+    color: '#8B3FD1', // roxo
   },
 };
