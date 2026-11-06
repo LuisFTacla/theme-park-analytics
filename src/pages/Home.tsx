@@ -113,8 +113,8 @@ export function Home() {
 
         {/* ── Header ── */}
         <div className="mb-14 animate-fade-up" style={{ animationDelay: '0s', opacity: 0 }}>
-          <h1 className="flex items-center gap-3 md:gap-4 font-display text-5xl md:text-6xl font-bold leading-tight mb-3">
-            <img src="/parkometrics-marca.svg" alt="" className="h-12 md:h-14 w-auto" />
+          <h1 className="flex items-center gap-2 sm:gap-3 md:gap-4 font-display text-[clamp(1.75rem,9.5vw,2.25rem)] sm:text-5xl md:text-6xl font-bold leading-tight mb-3">
+            <img src="/parkometrics-marca.svg" alt="" className="h-10 sm:h-12 md:h-14 w-auto shrink-0" />
             <span>Parko<span className="text-brand-primary">metrics</span></span>
           </h1>
           <p className="font-display text-lg md:text-xl text-brand-text/80 mb-4">
