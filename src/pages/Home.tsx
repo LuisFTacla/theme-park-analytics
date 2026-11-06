@@ -368,7 +368,7 @@ export function Home() {
                   {
                     version: 'v5.0', label: 'Atual',
                     items: [
-                      '🎡 Nova Identidade — Parkometrics: o site ganhou nome, marca, ícones e uma paleta de cores inspirada no uniforme do Beto Carrero.',
+                      '🎡 Nova Identidade — Parkometrics: o site ganhou nome, marca (com um trenzinho de montanha-russa subindo a curva), ícones e uma paleta de cores inspirada no uniforme do Beto Carrero.',
                       '🌗 Modo Claro e Escuro: alterne o tema pelo botão no topo; o site segue a preferência do seu sistema e lembra a sua escolha.',
                       '🍔 Menu na Página do Parque: troque de parque com busca, volte ao início e mude o tema sem sair da página.',
                       '🔗 Links Compartilháveis: aba, data e intervalo ficam no endereço da página — dá pra mandar o link de um dia específico e usar o botão voltar do navegador.',

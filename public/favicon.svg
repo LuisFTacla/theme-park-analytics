@@ -4,6 +4,8 @@
     .pm-bg    { fill: #16132A; stroke: #2A2445; }
     .pm-bars  { fill: #3D3760; }
     .pm-curve { stroke: #E0368F; }
+    .pm-train { fill: #E0368F; }
+    .pm-arms  { fill: none; stroke: #E0368F; stroke-width: 8; stroke-linecap: round; }
   </style>
   <rect class="pm-bg" x="0" y="0" width="512" height="512" rx="112" stroke-width="0"/>
   <g class="pm-bars">
@@ -12,4 +14,13 @@
     <rect x="332" y="246" width="76" height="176" rx="20"/>
   </g>
   <path class="pm-curve" d="M90 262 C150 240 196 120 262 112 C326 104 330 214 372 206 C394 202 408 192 424 182" fill="none" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Trem na subida: posicionado sobre a curva e inclinado pela tangente dela -->
+  <g class="pm-train" transform="translate(165.6 191.9) rotate(-51.3) scale(1.3) translate(0 -3.7)">
+    <rect x="-49" y="-42" width="46" height="22" rx="9"/>
+    <circle cx="-26" cy="-54" r="9"/>
+    <path class="pm-arms" d="M-33 -46 L-48 -72 M-19 -46 L-4 -72"/>
+    <rect x="3" y="-42" width="46" height="22" rx="9"/>
+    <circle cx="26" cy="-54" r="9"/>
+    <path class="pm-arms" d="M19 -46 L4 -72 M33 -46 L48 -72"/>
+  </g>
 </svg>
